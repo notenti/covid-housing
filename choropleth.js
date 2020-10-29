@@ -19,7 +19,8 @@ var tooltip = d3
   .attr("class", "tooltip")
   .style("opacity", 0);
 
-var dataTime = d3.range(0, 10).map((d) => new Date(2000 + d, 10, 3));
+var dataTime = d3.range(1, 11)
+
 var colors = [
   "#e8e8e8",
   "#ace4e4",
@@ -36,11 +37,11 @@ var sliderTime = d3
   .sliderBottom()
   .min(d3.min(dataTime))
   .max(d3.max(dataTime))
-  .step(1000 * 60 * 60 * 24 * 365)
+  .step(1)
+  .default(1)
   .width(300)
-  .tickFormat(d3.timeFormat("%Y"))
   .tickValues(dataTime)
-  .default(new Date(2005, 10, 3))
+  .default(1)
   .on("onchange", (val) => {
     update(val);
   });
@@ -55,93 +56,79 @@ var gTime = d3
 
 gTime.call(sliderTime);
 
-var sliderRange = d3
-  .sliderBottom()
-  .width(300)
-  .ticks(10)
-  .step(1)
-  .default([0, 1])
-  .fill("#2196f3")
-  .on("onchange", (val) => ahh(val));
-
-var gRange = d3
-  .select("#slider-range")
-  .append("svg")
-  .attr("width", 500)
-  .attr("height", 100)
-  .append("g")
-  .attr("transform", "translate(200,30)");
-
-gRange.call(sliderRange);
-
 const generateToolTip = (d, states) => {
-  return `<p><strong> ${d.properties.name}, ${
-    states.get(d.id.slice(0, 2)).name
-  } </strong></p>
+  let month = ('0' + sliderTime.value()).slice(-2)
+  let county = d.properties.name
+  let state = states.get(d.id.slice(0, 2)).name
+  let covid = d.properties.vals.get(month)[0].total_confirmed || "0"
+  let housing = "$" + d.properties.vals.get(month)[0].median_listing_price.toFixed(2) || "No Data"
+
+  return `<p><strong>${county}, ${state}</strong></p>
   <table><tbody>
-  <tr><td class='wide'>Diabetes:</td><td> ${d.properties.vals[0]}% </td></tr>
-  <tr><td class='wide'>Obesity:</td><td> ${d.properties.vals[1]}% </td></tr>
+  <tr><td class='wide'>Covid:</td><td> ${covid}</td></tr>
+  <tr><td class='wide'>Median:</td><td> ${housing}</td></tr>
   </tbody></table>`;
 };
 
+var parseDate = d3.timeParse("%Y-%m-%d")
+var formatMonth = d3.timeFormat("%m")
 const promises = [
   d3.json("counties-albers-10m.json"),
-  d3.csv("cdc-diabetes-obesity.csv"),
+  d3.csv("joined.csv"),
 ];
 
 Promise.all(promises).then(ready);
 
-function ready([us, cdc_data]) {
-  const health_by_county = new Map(
-    cdc_data.map((d) => [d.county, [+d.diabetes, +d.obesity]])
-  );
+function ready([us, covid]) {
+
+  covid.forEach(d => {
+    d.population = +d.population
+    d.total_confirmed = +d.total_confirmed
+    d.median_listing_price = +d.median_listing_price
+  })
+
+  const counties = topojson.feature(us, us.objects.counties);
+
+  const covid_by_county = d3.group(covid, d => d.county_fips, d => formatMonth(parseDate(d.date)))
+
   const states = new Map(
     us.objects.states.geometries.map((d) => [d.id, d.properties])
   );
 
-  const counties = topojson.feature(us, us.objects.counties);
-
   counties.features.forEach(function (county) {
-    county.properties.vals = health_by_county.get(county.id);
+    county.properties.vals = covid_by_county.get(county.id);
   });
-  const n = Math.floor(Math.sqrt(colors.length));
 
-  const x = d3.scaleQuantile(
-    Array.from(health_by_county.values(), (d) => d[0]),
-    d3.range(n)
-  );
-  const y = d3.scaleQuantile(
-    Array.from(health_by_county.values(), (d) => d[1]),
-    d3.range(n)
-  );
+  covid_county_vals = [...covid_by_county.values()]
+
+  const flattened_covid = covid_county_vals.map(county => [...county.values()]).map(data => data.map(month => month.map(day => day.total_confirmed))).flat(3)
+  let flattened_housing = covid_county_vals.map(county => [...county.values()]).map(data => data.map(month => month.map(day => day.median_listing_price))).flat(3)
+  flattened_housing = flattened_housing.filter(d => d > 0)
+  
+
+  const n = Math.floor(Math.sqrt(colors.length));
+  const x = d3.scaleQuantile(flattened_covid, d3.range(n))
+  const y = d3.scaleQuantile(flattened_housing, d3.range(n))
+
+  const path = d3.geoPath();
 
   const tip = d3
     .tip()
     .attr("class", "d3-tip")
     .html((EVENT, d) => generateToolTip(d, states));
 
-  sliderRange.min(d3.min(Array.from(health_by_county.values(), (d) => d[1]))).max(d3.max(Array.from(health_by_county.values(), (d) => d[1])));
-  const path = d3.geoPath();
-
-  const color = (value) => {
-    if (!value) return "#ccc";
-    let [diabetes, obesity] = value;
-    return colors[y(obesity) + x(diabetes) * 3];
+  const color = (value, month) => {
+    if (!value || !value.get(month) || !value.get(month)[2].median_listing_price) return "#ccc";
+    let median_listing_price = value.get(month)[2].median_listing_price
+    let confirmed_covid_cases = value.get(month)[2].total_confirmed
+    return colors[y(median_listing_price) + x(confirmed_covid_cases) * 3];
   };
 
-  update = (year) => {
-    countyShapes.style("fill", color([year, year]));
+  update = month => {
+    countyShapes.style("fill", d => {
+      return color(d.properties.vals, ('0' + month).slice(-2))
+    })
   };
-
-  ahh = range => {
-  let [left, right] = range
-  d3.selectAll('.county').attr('fill', filler)
-}
-
-filler = (data, value) => {
-    console.log(data, value)
-    return "red"
-}
 
   svg.call(tip);
 
@@ -150,7 +137,6 @@ filler = (data, value) => {
     .data(counties.features)
     .enter()
     .append("path")
-    .attr("fill", (d) => color(health_by_county.get(d.id)))
     .attr("class", "county")
     .attr("d", path)
     .on("mouseover", tip.show)
@@ -163,4 +149,6 @@ filler = (data, value) => {
     .attr("stroke", "white")
     .attr("stroke-linejoin", "round")
     .attr("d", path);
+
+  update('01')
 }
