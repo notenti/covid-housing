@@ -91,28 +91,26 @@ function ready([us, covid]) {
   const counties = topojson.feature(us, us.objects.counties);
   const covid_by_county = d3.group(covid, d => d.county_fips, d => formatMonth(parseDate(d.date)))
   const states = new Map(us.objects.states.geometries.map(d => [d.id, d.properties]));
-  let percents = []
 
   counties.features.forEach(function (county) {
     county.properties.vals = covid_by_county.get(+county.id);
 
     const full_timeline_data = [...county.properties.vals.values()]
     const median_listing_price_per_month = full_timeline_data.map(month => d3.max(month.map(day => day.median_listing_price))).filter(price => price > 0)
+    const population = d3.max(full_timeline_data.map(month => d3.max(month.map(day => day.population))))
     const percent_change = (d3.max(median_listing_price_per_month) - d3.min(median_listing_price_per_month)) / d3.min(median_listing_price_per_month)
-    county.properties.housing_change = percent_change || 0
-    if (percent_change) {
-      percents.push(percent_change)
-    }
+
     for (let [month, data] of county.properties.vals) {
       for (d of data) {
         d.percent_change = percent_change
+        d.covid_population = d.total_confirmed / population
       }
     }
   });
 
   covid_county_vals = [...covid_by_county.values()]
 
-  const flattened_covid = covid_county_vals.map(county => [...county.values()]).map(data => data.map(month => month.map(day => day.total_confirmed))).flat(3)
+  const flattened_covid = covid_county_vals.map(county => [...county.values()]).map(data => data.map(month => month.map(day => day.covid_population))).flat(3)
   const flattened_housing = covid_county_vals.map(county => [...county.values()]).map(data => data.map(month => month.map(day => day.percent_change))).flat(3)
 
   const n = Math.floor(Math.sqrt(colors.length));
@@ -129,8 +127,8 @@ function ready([us, covid]) {
   const color = (value, month) => {
     if (!value || !value.get(month) || !value.get(month)[2].percent_change) return "#ccc";
     let percent_change_in_housing = value.get(month)[2].percent_change
-    let confirmed_covid_cases = value.get(month)[2].total_confirmed
-    return colors[y(median_listing_price) + x(percent_change_in_housing) * 3];
+    let confirmed_covid_cases = value.get(month)[2].covid_population
+    return colors[y(percent_change_in_housing) + x(confirmed_covid_cases) * 3];
   };
 
   update = month => {
