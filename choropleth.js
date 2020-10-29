@@ -85,18 +85,19 @@ function ready([us, covid]) {
     d.population = +d.population
     d.total_confirmed = +d.total_confirmed
     d.median_listing_price = +d.median_listing_price
+    d.county_fips = +d.county_fips
   })
 
   const counties = topojson.feature(us, us.objects.counties);
 
   const covid_by_county = d3.group(covid, d => d.county_fips, d => formatMonth(parseDate(d.date)))
 
-  const states = new Map(
-    us.objects.states.geometries.map((d) => [d.id, d.properties])
-  );
+
+  console.log(covid_by_county)
+  const states = new Map(us.objects.states.geometries.map(d => [d.id, d.properties]));
 
   counties.features.forEach(function (county) {
-    county.properties.vals = covid_by_county.get(county.id);
+    county.properties.vals = covid_by_county.get(+county.id);
   });
 
   covid_county_vals = [...covid_by_county.values()]
@@ -132,8 +133,7 @@ function ready([us, covid]) {
 
   svg.call(tip);
 
-  const countyShapes = svg
-    .selectAll(".county")
+  const countyShapes = svg.selectAll(".county")
     .data(counties.features)
     .enter()
     .append("path")
@@ -142,8 +142,7 @@ function ready([us, covid]) {
     .on("mouseover", tip.show)
     .on("mouseout", tip.hide);
 
-  svg
-    .append("path")
+  svg.append("path")
     .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
     .attr("fill", "none")
     .attr("stroke", "white")
