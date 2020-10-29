@@ -21,7 +21,7 @@ var tooltip = d3
 
 var dataTime = d3.range(1, 11)
 
-var colors = [
+var colors2 = [
   "#e8e8e8",
   "#ace4e4",
   "#5ac8c8",
@@ -32,6 +32,25 @@ var colors = [
   "#8c62aa",
   "#3b4994",
 ];
+
+var colors = [
+  "#fcfefd",
+  "#c0e6e7",
+  "#86d1d6",
+  "#70c6a3",
+  "#f9f7be",
+  "#dbebc6",
+  "#88cb95",
+  "#70c6a3",
+  "#f4f073",
+  "#d2de4e",
+  "#87c653",
+  "#71c265",
+  "#f1ec1f",
+  "#bdd72e",
+  "#81c441",
+  "#6dbd44"
+]
 
 var sliderTime = d3
   .sliderBottom()
@@ -130,7 +149,7 @@ function ready([us, covid]) {
     if (!value || !value.get(month) || !value.get(month)[2].percent_change) return "#ccc";
     let percent_change_in_housing = value.get(month)[2].percent_change
     let confirmed_covid_cases = value.get(month)[2].total_confirmed
-    return colors[y(median_listing_price) + x(percent_change_in_housing) * 3];
+    return colors[y(percent_change_in_housing) + x(confirmed_covid_cases) * 3];
   };
 
   update = month => {
