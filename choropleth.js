@@ -21,7 +21,7 @@ var tooltip = d3
 
 var dataTime = d3.range(1, 11)
 
-var colors2 = [
+var colors = [
   "#e8e8e8",
   "#ace4e4",
   "#5ac8c8",
@@ -33,24 +33,6 @@ var colors2 = [
   "#3b4994",
 ];
 
-var colors = [
-  "#fcfefd",
-  "#c0e6e7",
-  "#86d1d6",
-  "#70c6a3",
-  "#f9f7be",
-  "#dbebc6",
-  "#88cb95",
-  "#70c6a3",
-  "#f4f073",
-  "#d2de4e",
-  "#87c653",
-  "#71c265",
-  "#f1ec1f",
-  "#bdd72e",
-  "#81c441",
-  "#6dbd44"
-]
 
 var sliderTime = d3
   .sliderBottom()
@@ -80,7 +62,7 @@ const generateToolTip = (d, states) => {
   let county = d.properties.name
   let state = states.get(d.id.slice(0, 2)).name
   let covid = d.properties.vals.get(month)[0].total_confirmed || "0"
-  let housing = "$" + d.properties.vals.get(month)[0].median_listing_price.toFixed(2) || "No Data"
+  let housing = "$" + d.properties.vals.get(month)[0].Zhvi.toFixed(2) || "No Data"
 
   return `<p><strong>${county}, ${state}</strong></p>
   <table><tbody>
@@ -88,6 +70,35 @@ const generateToolTip = (d, states) => {
   <tr><td class='wide'>Median:</td><td> ${housing}</td></tr>
   </tbody></table>`;
 };
+
+// const leg = d3.select('#chart').append('svg')
+// const k= 24, n= 3
+// leg.append('g').attr('transform', `translate(-${k * n / 2},-${k * n / 2}) rotate(-45 ${k * n / 2},${k * n / 2})`)
+
+
+// const legend = () => {
+//   const k = 24;
+//   const n = 3
+//   // const arrow = DOM.uid();
+//   return `
+// <g font-family=sans-serif font-size=10>
+//   <g transform="translate(-${k * n / 2},-${k * n / 2}) rotate(-45 ${k * n / 2},${k * n / 2})">
+//     <marker id=nate markerHeight=10 markerWidth=10 refX=6 refY=3 orient=auto>
+//       <path d="M0,0L9,3L0,6Z" />
+//     </marker>
+//     ${d3.cross(d3.range(n), d3.range(n)).map(([i, j]) => `<rect width=${k} height=${k} x=${i * k} y=${(n - 1 - j) * k} fill=${colors[j * n + i]}></rect>`)}
+//     <line x1=0 x2=${n * k} y1=${n * k} y2=${n * k} stroke=black stroke-width=1.5 />
+//     <line y2=0 y1=${n * k} stroke=black stroke-width=1.5 />
+//     <text font-weight="bold" dy="0.71em" transform="rotate(90) translate(${n / 2 * k},6)" text-anchor="middle">COVID</text>
+//     <text font-weight="bold" dy="0.71em" transform="translate(${n / 2 * k},${n * k + 6})" text-anchor="middle">HOUSING</text>
+//   </g>
+// </g>`;
+// }
+
+// console.log(legend())
+
+// leg.append(legend())
+//       .attr("transform", "translate(870,450)");
 
 var parseDate = d3.timeParse("%Y-%m-%d")
 var formatMonth = d3.timeFormat("%m")
@@ -103,25 +114,21 @@ function ready([us, covid]) {
   covid.forEach(d => {
     d.population = +d.population
     d.total_confirmed = +d.total_confirmed
-    d.median_listing_price = +d.median_listing_price
+    d.Zhvi = +d.Zhvi
     d.county_fips = +d.county_fips
   })
 
   const counties = topojson.feature(us, us.objects.counties);
-  const covid_by_county = d3.group(covid, d => d.county_fips, d => formatMonth(parseDate(d.date)))
+  const covid_by_county = d3.group(covid, d => d.county_fips, d => formatMonth(parseDate(d.date_x)))
   const states = new Map(us.objects.states.geometries.map(d => [d.id, d.properties]));
-  let percents = []
 
   counties.features.forEach(function (county) {
     county.properties.vals = covid_by_county.get(+county.id);
 
     const full_timeline_data = [...county.properties.vals.values()]
-    const median_listing_price_per_month = full_timeline_data.map(month => d3.max(month.map(day => day.median_listing_price))).filter(price => price > 0)
-    const percent_change = (d3.max(median_listing_price_per_month) - d3.min(median_listing_price_per_month)) / d3.min(median_listing_price_per_month)
-    county.properties.housing_change = percent_change || 0
-    if (percent_change) {
-      percents.push(percent_change)
-    }
+    const zhvi_per_month = full_timeline_data.map(month => d3.max(month.map(day => day.Zhvi))).filter(price => price > 0)
+    const percent_change = (d3.max(zhvi_per_month) - d3.min(zhvi_per_month)) / d3.min(zhvi_per_month)
+    
     for (let [month, data] of county.properties.vals) {
       for (d of data) {
         d.percent_change = percent_change
