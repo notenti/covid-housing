@@ -33,6 +33,8 @@ var colors = [
   "#3b4994",
 ];
 
+var colors_per_class = Math.floor(Math.sqrt(colors.length));
+
 
 var sliderTime = d3
   .sliderBottom()
@@ -53,7 +55,7 @@ var gTime = d3
   .attr("width", 500)
   .attr("height", 100)
   .append("g")
-  .attr("transform", "translate(30,30)");
+  .attr("transform", "translate(80,30)");
 
 gTime.call(sliderTime);
 
@@ -71,34 +73,73 @@ const generateToolTip = (d, states) => {
   </tbody></table>`;
 };
 
-// const leg = d3.select('#chart').append('svg')
-// const k= 24, n= 3
-// leg.append('g').attr('transform', `translate(-${k * n / 2},-${k * n / 2}) rotate(-45 ${k * n / 2},${k * n / 2})`)
+const legend = d3.select('#chart').append('svg')
+const side_length = 24;
+const group = legend
+  .append("g")
+  .attr(
+    "transform",
+    `translate(20, 20)rotate(-45 ${(side_length * colors_per_class) / 2},${
+      (side_length * colors_per_class) / 2
+    })`
+  );
+const marker = group
+  .append("marker")
+  .attr("id", "arrow")
+  .attr("markerHeight", "10")
+  .attr("markerWidth", "10")
+  .attr("refX", "6")
+  .attr("refY", "3")
+  .attr("orient", "auto");
 
+marker.append("path").attr('d', "M0,0L9,3L0,6Z")
 
-// const legend = () => {
-//   const k = 24;
-//   const n = 3
-//   // const arrow = DOM.uid();
-//   return `
-// <g font-family=sans-serif font-size=10>
-//   <g transform="translate(-${k * n / 2},-${k * n / 2}) rotate(-45 ${k * n / 2},${k * n / 2})">
-//     <marker id=nate markerHeight=10 markerWidth=10 refX=6 refY=3 orient=auto>
-//       <path d="M0,0L9,3L0,6Z" />
-//     </marker>
-//     ${d3.cross(d3.range(n), d3.range(n)).map(([i, j]) => `<rect width=${k} height=${k} x=${i * k} y=${(n - 1 - j) * k} fill=${colors[j * n + i]}></rect>`)}
-//     <line x1=0 x2=${n * k} y1=${n * k} y2=${n * k} stroke=black stroke-width=1.5 />
-//     <line y2=0 y1=${n * k} stroke=black stroke-width=1.5 />
-//     <text font-weight="bold" dy="0.71em" transform="rotate(90) translate(${n / 2 * k},6)" text-anchor="middle">COVID</text>
-//     <text font-weight="bold" dy="0.71em" transform="translate(${n / 2 * k},${n * k + 6})" text-anchor="middle">HOUSING</text>
-//   </g>
-// </g>`;
-// }
+group
+  .selectAll("rect")
+  .data(d3.cross(d3.range(3), d3.range(3)))
+  .enter()
+  .append("rect")
+  .attr("width", `${side_length}`)
+  .attr("height", `${side_length}`)
+  .attr("x", (d) => `${d[0] * side_length}`)
+  .attr("y", (d) => `${(colors_per_class - 1 - d[1]) * side_length}`)
+  .attr("fill", (d) => `${colors[d[1] * colors_per_class + d[0]]}`);
 
-// console.log(legend())
+group
+  .append("line")
+  .attr("x1", "0")
+  .attr("x2", `${colors_per_class * side_length}`)
+  .attr("y1", `${colors_per_class * side_length}`)
+  .attr("y2", `${colors_per_class * side_length}`)
+  .attr("marker-end", "url(#arrow)")
+  .attr("stroke", "black")
+  .attr("stroke-width", "1.5");
 
-// leg.append(legend())
-//       .attr("transform", "translate(870,450)");
+group
+  .append("line")
+  .attr("y2", "0")
+  .attr("y1", `${colors_per_class * side_length}`)
+  .attr("marker-end", "url(#arrow)")
+  .attr("stroke", "black")
+  .attr("stroke-width", "1.5");
+
+// group
+//   .append("text")
+//   .attr("font-weight", "bold")
+//   .attr("dy", "0.71em")
+//   .attr("transform", `translate(${(n / 2) * k},6`)
+//   .attr("text-anchor", "middle")
+//   .text("Covid");
+
+// group
+//   .append("text")
+//   .attr("font-weight", "bold")
+//   .attr("dy", "0.71em")
+//   .attr("transform", `translate(${(n / 2) * k},${n * k + 6}`)
+//   .attr("text-anchor", "middle")
+//   .text("Housing");
+
+legend.attr("transform", "translate(780,120)")
 
 var parseDate = d3.timeParse("%Y-%m-%d")
 var formatMonth = d3.timeFormat("%m")
@@ -141,9 +182,8 @@ function ready([us, covid]) {
   const flattened_covid = covid_county_vals.map(county => [...county.values()]).map(data => data.map(month => month.map(day => day.total_confirmed))).flat(3)
   const flattened_housing = covid_county_vals.map(county => [...county.values()]).map(data => data.map(month => month.map(day => day.percent_change))).flat(3)
 
-  const n = Math.floor(Math.sqrt(colors.length));
-  const x = d3.scaleQuantile(flattened_covid, d3.range(n))
-  const y = d3.scaleQuantile(flattened_housing, d3.range(n))
+  const x = d3.scaleQuantile(flattened_covid, d3.range(colors_per_class))
+  const y = d3.scaleQuantile(flattened_housing, d3.range(colors_per_class))
 
   const path = d3.geoPath();
 
