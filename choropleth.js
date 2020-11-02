@@ -6,10 +6,10 @@ var margin = { right: 150, top: 50, left: 150, bottom: 50 },
 
 var svg = d3
   .select("#chart")
+  .attr("align", "center")
   .append("svg")
   .attr("width", w)
   .attr("height", h)
-  .attr("id", "chart")
   .append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
@@ -34,7 +34,11 @@ var colors = [
 var colors_per_class = Math.floor(Math.sqrt(colors.length));
 
 createLegend = () => {
-  const legend = d3.select("#chart").append("svg");
+  const legend = d3
+    .select("#legend")
+    .append("svg")
+    .attr("width", 120)
+    .attr("height", 120);
   const side_length = 24;
   const group = legend
     .append("g")
@@ -84,23 +88,26 @@ createLegend = () => {
     .attr("stroke", "black")
     .attr("stroke-width", "1.5");
 
-  // group
-  //   .append("text")
-  //   .attr("font-weight", "bold")
-  //   .attr("dy", "0.71em")
-  //   .attr("transform", `translate(${(n / 2) * k},6`)
-  //   .attr("text-anchor", "middle")
-  //   .text("Covid");
+  group
+    .append("text")
+    .attr("font-weight", "bold")
+    .attr("dy", "0.71em")
+    .attr("transform", `rotate(90) translate(${(colors_per_class / 2) * side_length},6)`)
+    .attr("text-anchor", "middle")
+    .text("Covid");
 
-  // group
-  //   .append("text")
-  //   .attr("font-weight", "bold")
-  //   .attr("dy", "0.71em")
-  //   .attr("transform", `translate(${(n / 2) * k},${n * k + 6}`)
-  //   .attr("text-anchor", "middle")
-  //   .text("Housing");
+  group
+    .append("text")
+    .attr("font-weight", "bold")
+    .attr("dy", "0.71em")
+    .attr(
+      "transform",
+      `translate(${(colors_per_class / 2) * side_length},${colors_per_class * side_length + 6})`
+    )
+    .attr("text-anchor", "middle")
+    .text("Housing");
 
-  legend.attr("transform", "translate(860,120)");
+  legend.attr('transform', 'translate(1700,-330)')
 };
 
 const dateRange = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
@@ -118,8 +125,10 @@ var sliderTime = d3
   });
 
 var gTime = d3
-  .select("#slider-time")
+  .select("#slider")
+  .attr('align', 'center')
   .append("svg")
+  .attr('align', 'center')
   .attr("width", 600)
   .attr("height", 100)
   .append("g")
@@ -177,8 +186,6 @@ function ready([us, covid]) {
     county.properties.vals = county_of_interest;
     let january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
     let price_at_year_start = county_of_interest.get(january_1st_epoch)[0].Zhvi;
-
-    const full_timeline_data = [...county.properties.vals.values()];
 
     for (let [day, data] of county.properties.vals) {
       for (d of data) {
