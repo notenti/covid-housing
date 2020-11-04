@@ -1,12 +1,11 @@
 var w = 1200,
   h = 700;
-var margin = { right: 150, top: 50, left: 150, bottom: 50 },
+var margin = { right: 50, top: 50, left: 50, bottom: 50 },
   width = w - margin.right - margin.left,
   height = h - margin.top - margin.bottom;
 
 var svg = d3
   .select("#chart")
-  .attr("align", "center")
   .append("svg")
   .attr("width", w)
   .attr("height", h)
@@ -107,7 +106,7 @@ createLegend = () => {
     .attr("text-anchor", "middle")
     .text("Housing");
 
-  legend.attr('transform', 'translate(1700,-330)')
+  legend.attr('transform', 'translate(900,-330)')
 };
 
 const dateRange = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
@@ -117,7 +116,7 @@ var sliderTime = d3
   .min(d3.min(dateRange))
   .max(d3.max(dateRange))
   .step(1000 * 60 * 60 * 24)
-  .width(500)
+  .width(800)
   .tickFormat(d3.timeFormat("%m-%d"))
   .default(new Date(2020, 0).getTime())
   .on("onchange", (val) => {
@@ -128,11 +127,11 @@ var gTime = d3
   .select("#slider")
   .attr('align', 'center')
   .append("svg")
-  .attr('align', 'center')
-  .attr("width", 600)
+  .attr("width", 860)
   .attr("height", 100)
+  .attr('stroke-width', '1px')
   .append("g")
-  .attr("transform", "translate(80,30)");
+  .attr("transform", "translate(30,30)");
 
 gTime.call(sliderTime);
 
@@ -175,7 +174,7 @@ function ready([us, covid]) {
   const covid_by_county = d3.group(
     covid,
     (d) => d.county_fips,
-    (d) => d3.utcDay(parseDate(d.date_x)).getTime()
+    (d) => d3.utcDay(parseDate(d.date)).getTime()
   );
   const states = new Map(
     us.objects.states.geometries.map((d) => [d.id, d.properties])
@@ -252,6 +251,7 @@ function ready([us, covid]) {
     .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
     .attr("fill", "none")
     .attr("stroke", "white")
+    .attr("stroke-width", "1px")
     .attr("stroke-linejoin", "round")
     .attr("d", path);
 

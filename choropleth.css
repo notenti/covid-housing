@@ -1,3 +1,35 @@
 .wide {
     width: 180px;
 }
+
+body {
+    background-color: white;
+}
+
+.jumbotron {
+    margin-top: 50px;
+    background-color: white;
+    border-width: 1px !important;
+}
+
+.choropleth-header {
+    line-height: 1;
+    border-bottom: 1px solid #e5e5e5;
+}
+  
+.choropleth-header-logo {
+    font-family: "Playfair Display";
+    font-size: 2.25rem;
+}
+  
+.choropleth-header-logo:hover {
+    text-decoration: none;
+}
+  
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Playfair Display";
+}
+
+#legend {
+    position: absolute;
+}
