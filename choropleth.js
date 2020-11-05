@@ -32,7 +32,7 @@ var colors = [
 
 var colors_per_class = Math.floor(Math.sqrt(colors.length));
 
-createLegend = () => {
+const createLegend = () => {
   const legend = d3
     .select("#legend")
     .append("svg")
@@ -91,7 +91,10 @@ createLegend = () => {
     .append("text")
     .attr("font-weight", "bold")
     .attr("dy", "0.71em")
-    .attr("transform", `rotate(90) translate(${(colors_per_class / 2) * side_length},6)`)
+    .attr(
+      "transform",
+      `rotate(90) translate(${(colors_per_class / 2) * side_length},6)`
+    )
     .attr("text-anchor", "middle")
     .text("Covid");
 
@@ -101,15 +104,17 @@ createLegend = () => {
     .attr("dy", "0.71em")
     .attr(
       "transform",
-      `translate(${(colors_per_class / 2) * side_length},${colors_per_class * side_length + 6})`
+      `translate(${(colors_per_class / 2) * side_length},${
+        colors_per_class * side_length + 6
+      })`
     )
     .attr("text-anchor", "middle")
     .text("Housing");
 
-  legend.attr('transform', 'translate(900,-330)')
+  legend.attr("transform", "translate(900,-330)");
 };
 
-const dateRange = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
+var dateRange = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
 
 var sliderTime = d3
   .sliderBottom()
@@ -121,15 +126,16 @@ var sliderTime = d3
   .default(new Date(2020, 0).getTime())
   .on("onchange", (val) => {
     update(val.getTime());
+    updateLine(val.getTime(), null);
   });
 
 var gTime = d3
   .select("#slider")
-  .attr('align', 'center')
+  .attr("align", "center")
   .append("svg")
   .attr("width", 860)
   .attr("height", 100)
-  .attr('stroke-width', '1px')
+  .attr("stroke-width", "1px")
   .append("g")
   .attr("transform", "translate(30,30)");
 
@@ -145,7 +151,9 @@ const generateToolTip = (d, states) => {
   let percent_change = d.properties.vals.get(day)[0].percent_change;
   return `<p><strong>${county}, ${state}</strong></p>
   <table><tbody>
-  <tr><td class='wide'>Covid:</td><td> ${(covid_per_population * 100).toFixed(3)}%</td></tr>
+  <tr><td class='wide'>Covid:</td><td> ${(covid_per_population * 100).toFixed(
+    3
+  )}%</td></tr>
   <tr><td class='wide'># of Positive:</td><td> ${covid_count}</td></tr>
   <tr><td class='wide'>Median:</td><td> ${housing}</td></tr>
   <tr><td class='wide'>Percent Change:</td><td> ${(
@@ -154,12 +162,47 @@ const generateToolTip = (d, states) => {
   </tbody></table>`;
 };
 
+
+const wPanel = 700,
+  hPanel = 500;
+const marginPanel = { top: 20, right: 50, bottom: 40, left: 50 };
+const widthPanel = wPanel - marginPanel.left - marginPanel.right;
+const heightPanel = hPanel - marginPanel.top - marginPanel.bottom;
+
+const xPanelScale = d3
+  .scaleTime()
+  .domain(d3.extent(dateRange))
+  .range([0, widthPanel]);
+
+const yPanelScale = d3
+  .scaleLinear()
+  .range([heightPanel, 0]);
+
+var linePanel = d3
+  .line()
+  .x((d, i) => xPanelScale(dateRange[i]))
+  .y((d) => yPanelScale(d));
+
+var xAxisPanelCall = d3.axisBottom().tickFormat(d3.timeFormat("%b"))
+var yAxisPanelCall = d3.axisLeft()
+
+var panelSvg = d3
+  .select("#panel")
+  .attr("fips", 2013)
+  .append("svg")
+  .attr("width", wPanel)
+  .attr("height", hPanel);
+var g = panelSvg
+  .append("g")
+  .attr("transform", `translate(${marginPanel.left}, ${marginPanel.top})`);
+
+var xAxisPanel = g.append("g").attr("transform", `translate(0, ${heightPanel})`);
+var yAxisPanel = g.append("g")
+
 createLegend();
 
 var parseDate = d3.timeParse("%Y-%m-%d");
-
 const promises = [d3.json("counties-albers-10m.json"), d3.csv("joined.csv")];
-
 Promise.all(promises).then(ready);
 
 function ready([us, covid]) {
@@ -179,6 +222,25 @@ function ready([us, covid]) {
   const states = new Map(
     us.objects.states.geometries.map((d) => [d.id, d.properties])
   );
+
+  const start_data = [...covid_by_county.get(+02013).values()]
+    .map((day) => day.map((d) => d.total_confirmed))
+    .flat()
+    .slice(0, dateRange.length);
+
+  yPanelScale.domain(d3.extent(start_data))
+
+  xAxisPanel.call(xAxisPanelCall.scale(xPanelScale))
+  yAxisPanel.call(yAxisPanelCall.scale(yPanelScale))
+
+  g.append("path")
+    .attr('class', 'please')
+    .attr("fill", "none")
+    .attr("stroke", "steelblue")
+    .attr("stroke-width", 1.5)
+    .attr("stroke-linejoin", "round")
+    .attr("stroke-linecap", "round")
+    .attr("d", linePanel(start_data));
 
   counties.features.forEach(function (county) {
     let county_of_interest = covid_by_county.get(+county.id);
@@ -211,7 +273,10 @@ function ready([us, covid]) {
     .flat(4);
 
   const x = d3.scaleQuantile(flattened_covid, d3.range(colors_per_class));
-  const y = d3.scaleQuantile(flattened_housing, d3.range(-1 * colors_per_class + 1, 1));
+  const y = d3.scaleQuantile(
+    flattened_housing,
+    d3.range(-1 * colors_per_class + 1, 1)
+  );
 
   const path = d3.geoPath();
 
@@ -225,13 +290,39 @@ function ready([us, covid]) {
     let day_of_interest = value.get(date)[0];
     let percent_change_in_housing = day_of_interest.percent_change;
     let confirmed_covid_cases = day_of_interest.normalized_covid;
-    return colors[Math.abs(y(percent_change_in_housing)) + x(confirmed_covid_cases) * 3];
+    return colors[
+      Math.abs(y(percent_change_in_housing)) + x(confirmed_covid_cases) * 3
+    ];
   };
 
   update = (date) => {
     countyShapes.style("fill", (d) => {
       return color(d.properties.vals, date);
     });
+  };
+
+  updateLine = (date, fips) => {
+    if (!fips) {
+      var fips = d3.select("#panel").attr("fips");
+    }
+    console.log(fips)
+    let selected_county = covid_by_county.get(+fips);
+    let full_date_data = [...selected_county.values()]
+      .map((data) => data.map((d) => d.total_confirmed))
+      .flat();
+    const pre_date_data = new Map(
+      [...selected_county].filter(([key, val]) => key <= date)
+    );
+
+    let tes = [...pre_date_data.values()]
+      .map((data) => data.map((d) => d.total_confirmed))
+      .flat();
+    console.log(full_date_data)
+    yPanelScale.domain(d3.extent(full_date_data))
+    yAxisPanel.call(yAxisPanelCall.scale(yPanelScale))
+
+    g.select(".please").attr("d", linePanel(tes));
+    d3.select('#panel').attr('fips', fips)
   };
 
   svg.call(tip);
@@ -244,7 +335,8 @@ function ready([us, covid]) {
     .attr("class", "county")
     .attr("d", path)
     .on("mouseover", tip.show)
-    .on("mouseout", tip.hide);
+    .on("mouseout", tip.hide)
+    .on("click", (EVENT, d) => updateLine(sliderTime.value().getTime(), +d.id));
 
   svg
     .append("path")
