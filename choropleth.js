@@ -1,4 +1,4 @@
-const choropleth_margin = { right: 50, top: 50, left: 50, bottom: 50 },
+const choropleth_margin = { right: 50, top: 10, left: 50, bottom: 10 },
     choropleth_width = 1200 - choropleth_margin.right - choropleth_margin.left,
     choropleth_height = 700 - choropleth_margin.top - choropleth_margin.bottom;
 
@@ -18,10 +18,20 @@ const choropleth_svg = d3
 
 const panel_svg = d3
     .select("#panel")
-    .attr("fips", 2013)
+    .attr("fips", "02013")
+    .attr("name", "Test County")
     .append("svg")
     .attr("width", panel_width + panel_margin.right + panel_margin.left)
     .attr("height", panel_height + panel_margin.top + panel_margin.bottom);
+
+const panel_text = panel_svg
+    .append("text")
+    .attr("x", (panel_width + panel_margin.right + panel_margin.left) / 2)
+    .attr("y", panel_margin.top * 2)
+    .attr("text-anchor", "middle")
+    .style('fill', "#3b4994")
+    .style("font-size", "16px")
+    .style('font-family', 'Source Sans Pro')
 
 const panel_g = panel_svg
     .append("g")
@@ -206,6 +216,12 @@ const color = (value, date) => {
             x_choropleth_scale(confirmed_covid_cases) * 3
     ];
 };
+const alaska = {
+    id: "02013",
+    properties: {
+        name: "Aleutians East",
+    },
+};
 
 const getStatistics = (data, stat) =>
     [...data.values()].map((inner) => inner.map((d) => d[stat])).flat();
@@ -283,7 +299,7 @@ function ready([us, covid]) {
         .attr("d", path)
         .on("mouseover", tip.show)
         .on("mouseout", tip.hide)
-        .on("click", (EVENT, d) => updateCovidLine(slider_time.value().getTime(), +d.id));
+        .on("click", (EVENT, d) => updateCovidLine(slider_time.value().getTime(), d));
 
     choropleth_svg
         .append("path")
@@ -302,23 +318,26 @@ function ready([us, covid]) {
         });
     };
 
-    updateCovidLine = (date, fips) => {
-        if (!fips) {
-            var fips = d3.select("#panel").attr("fips");
-        }
+    updateCovidLine = (date, d) => {
+        var name = d ? d.properties.name : d3.select("#panel").attr("name");
+        var id = d ? d.id : d3.select("#panel").attr("fips");
 
-        const selected_county = covid_by_county.get(+fips);
-        const full_date_data = getCountyStatistics(covid_by_county, fips, "total_confirmed");
+        const selected_county = covid_by_county.get(+id);
+        const state = states.get(id.slice(0, 2)).name;
+        const county = name;
+        const full_date_data = getCountyStatistics(covid_by_county, id, "total_confirmed");
         const data_up_to_date = new Map([...selected_county].filter(([key, val]) => key <= date));
         const covid_for_county = getStatistics(data_up_to_date, "total_confirmed");
 
+        panel_text.text(`${county}, ${state}`);
         y_panel_scale.domain(d3.extent(full_date_data));
         y_axis_panel.call(y_axis_panel_call.scale(y_panel_scale));
 
         panel_g.select(".line").attr("d", panel_line(covid_for_county));
-        d3.select("#panel").attr("fips", fips);
+        d3.select("#panel").attr("fips", id);
+        d3.select("#panel").attr("name", name);
     };
 
     updateCountyColor(d3.utcDay(new Date(2020, 0)).getTime());
-    updateCovidLine(d3.utcDay(new Date(2020, 0)).getTime(), +2013);
+    updateCovidLine(d3.utcDay(new Date(2020, 0)).getTime(), alaska);
 }

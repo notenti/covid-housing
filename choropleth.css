@@ -7,9 +7,13 @@ body {
 }
 
 .jumbotron {
-    margin-top: 30px;
+    margin-top: 10px;
     background-color: white;
     border-width: 1px !important;
+}
+
+.panels {
+    margin-top: 10px;
 }
 
 .choropleth-header {
@@ -18,16 +22,13 @@ body {
 }
   
 .choropleth-header-logo {
-    font-family: "Playfair Display";
-    font-size: 2.25rem;
-}
-  
-.choropleth-header-logo:hover {
-    text-decoration: none;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 3rem;
+    font-weight: 600;
 }
   
 h1, h2, h3, h4, h5, h6 {
-    font-family: "Playfair Display";
+    font-family: 'Source Sans Pro', sans-serif;
 }
 
 #legend {
