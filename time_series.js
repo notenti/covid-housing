@@ -72,7 +72,7 @@ function timeSeriesChart() {
                 yScale.domain(d3.extent(data, d => d[1])).range([height, 0]);
                 svg.select('.x.axis').call(xAxis);
                 svg.select('.y.axis').call(yAxis);
-                update.attr('d', line);
+                update.transition().duration(1000).attr('d', line);
             };
 
             updateLabel = function () {
