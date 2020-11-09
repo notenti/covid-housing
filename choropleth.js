@@ -149,10 +149,10 @@ const generateToolTip = (d, states) => {
     let percent_change = d.properties.vals.get(day)[0].percent_change;
     return `<p><strong>${county}, ${state}</strong></p>
   <table><tbody>
-  <tr><td class='wide'>Covid:</td><td> ${(covid_per_population * 100).toFixed(3)}%</td></tr>
-  <tr><td class='wide'># of Positive:</td><td> ${covid_count}</td></tr>
-  <tr><td class='wide'>Median:</td><td> ${housing}</td></tr>
-  <tr><td class='wide'>Percent Change:</td><td> ${(percent_change * 100).toFixed(3)}%</td></tr>
+  <tr><td class='wide'>% of population with COVID-19:</td><td> ${(covid_per_population * 100).toFixed(3)}%</td></tr>
+  <tr><td class='wide'>Confirmed COVID-19 cases:</td><td> ${covid_count}</td></tr>
+  <tr><td class='wide'>Median housing cost:</td><td> ${housing}</td></tr>
+  <tr><td class='wide'>% change in housing cost:</td><td> ${(percent_change * 100).toFixed(3)}%</td></tr>
   </tbody></table>`;
 };
 
