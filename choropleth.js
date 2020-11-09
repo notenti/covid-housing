@@ -1,144 +1,220 @@
+function timeSeriesChart() {
+    var margin = { top: 20, right: 50, bottom: 40, left: 50 };
+    var width = 500 - margin.left - margin.right;
+    var height = 300 - margin.top - margin.bottom;
+    var updateData;
+    var updateLabel;
+    var updateFips;
+    var data = [];
+    var date;
+    var label;
+    var fips;
+
+    var xScale = d3.scaleTime();
+    var yScale = d3.scaleLinear();
+    var xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat('%b'));
+    var yAxis = d3.axisLeft(yScale);
+
+    function chart(selection) {
+        selection.each(function () {
+            xScale.domain(d3.extent(data, d => d[0])).range([0, width]);
+            yScale.domain(d3.extent(data, d => d[1])).range([height, 0]);
+
+            var line = d3
+                .line()
+                .x(d => xScale(d[0]))
+                .y(d => yScale(d[1]));
+
+            var dom = d3.select(this);
+
+            var svg = dom
+                .append('svg')
+                .attr('class', 'time-series')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom);
+
+            var svg_text = svg
+                .append('text')
+                .attr('x', (width + margin.right + margin.left) / 2)
+                .attr('y', margin.top * 2)
+                .attr('text-anchor', 'middle')
+                .style('fill', '#3b4994')
+                .style('font-size', '16px')
+                .style('font-family', 'Source Sans Pro');
+
+            var genter = svg
+                .append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            genter.append('g').attr('class', 'x axis');
+            genter.append('g').attr('class', 'y axis');
+            genter.append('path').attr('class', 'line');
+
+            var g = svg.select('g');
+
+            var lines = g
+                .select('.line')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', 'steelblue')
+                .attr('stroke-width', 1.5)
+                .attr('d', line);
+
+            svg.select('.x.axis')
+                .attr('transform', 'translate(0,' + yScale.range()[0] + ')')
+                .call(xAxis);
+            svg.select('.y.axis').call(yAxis);
+
+            updateData = function () {
+                const data_up_to_date = data.filter(([key, val]) => key <= date);
+                var update = g.select('.line').datum(data_up_to_date);
+                xScale.domain(d3.extent(data, d => d[0])).range([0, width]);
+                yScale.domain(d3.extent(data, d => d[1])).range([height, 0]);
+                svg.select('.x.axis').call(xAxis);
+                svg.select('.y.axis').call(yAxis);
+                update.attr('d', line);
+            };
+
+            updateLabel = function () {
+                svg_text.text(`${label.county}, ${label.state}`);
+            };
+            updateFips = function () {
+                dom.attr('fips', fips);
+            };
+        });
+    }
+
+    chart.data = function (value, stop_date) {
+        if (!arguments.length) return data;
+        data = value;
+        date = stop_date;
+        if (typeof updateData === 'function') updateData();
+        return chart;
+    };
+
+    chart.label = function (county, state) {
+        if (!arguments.length) return label;
+        label = { state: state, county: county };
+        if (typeof updateData === 'function') updateLabel();
+        return chart;
+    };
+
+    chart.fips = function (value) {
+        if (!arguments.length) return fips;
+        fips = value;
+        if (typeof updateData === 'function') updateFips();
+        return chart;
+    };
+
+    return chart;
+}
 const choropleth_margin = { right: 50, top: 10, left: 50, bottom: 10 },
     choropleth_width = 1200 - choropleth_margin.right - choropleth_margin.left,
     choropleth_height = 700 - choropleth_margin.top - choropleth_margin.bottom;
 
-const panel_margin = { top: 20, right: 50, bottom: 40, left: 50 },
-    panel_width = 500 - panel_margin.left - panel_margin.right,
-    panel_height = 300 - panel_margin.top - panel_margin.bottom;
-
 const date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
 
 const choropleth_svg = d3
-    .select("#chart")
-    .append("svg")
-    .attr("width", choropleth_width + choropleth_margin.right + choropleth_margin.left)
-    .attr("height", choropleth_height + choropleth_margin.top + choropleth_margin.bottom)
-    .append("g")
-    .attr("transform", `translate(${choropleth_margin.left}, ${choropleth_margin.top})`);
-
-const panel_svg = d3
-    .select("#panel")
-    .attr("fips", "02013")
-    .attr("name", "Test County")
-    .append("svg")
-    .attr("width", panel_width + panel_margin.right + panel_margin.left)
-    .attr("height", panel_height + panel_margin.top + panel_margin.bottom);
-
-const panel_text = panel_svg
-    .append("text")
-    .attr("x", (panel_width + panel_margin.right + panel_margin.left) / 2)
-    .attr("y", panel_margin.top * 2)
-    .attr("text-anchor", "middle")
-    .style('fill', "#3b4994")
-    .style("font-size", "16px")
-    .style('font-family', 'Source Sans Pro')
-
-const panel_g = panel_svg
-    .append("g")
-    .attr("transform", `translate(${panel_margin.left}, ${panel_margin.top})`);
-
-panel_g
-    .append("path")
-    .attr("class", "line")
-    .attr("fill", "none")
-    .attr("stroke", "steelblue")
-    .attr("stroke-width", 1.5)
-    .attr("stroke-linejoin", "round")
-    .attr("stroke-linecap", "round");
+    .select('#chart')
+    .append('svg')
+    .attr('width', choropleth_width + choropleth_margin.right + choropleth_margin.left)
+    .attr('height', choropleth_height + choropleth_margin.top + choropleth_margin.bottom)
+    .append('g')
+    .attr('transform', `translate(${choropleth_margin.left}, ${choropleth_margin.top})`);
 
 const choropleth_tooltip = d3
-    .select("body")
-    .append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
+    .select('body')
+    .append('div')
+    .attr('class', 'tooltip')
+    .style('opacity', 0);
 
 const bivariate_colors = [
-    "#e8e8e8",
-    "#ace4e4",
-    "#5ac8c8",
-    "#dfb0d6",
-    "#a5add3",
-    "#5698b9",
-    "#be64ac",
-    "#8c62aa",
-    "#3b4994",
+    '#e8e8e8',
+    '#ace4e4',
+    '#5ac8c8',
+    '#dfb0d6',
+    '#a5add3',
+    '#5698b9',
+    '#be64ac',
+    '#8c62aa',
+    '#3b4994',
 ];
 
 const colors_per_class = Math.floor(Math.sqrt(bivariate_colors.length));
 
 const createLegend = () => {
-    const legend = d3.select("#legend").append("svg").attr("width", 120).attr("height", 120);
+    const legend = d3.select('#legend').append('svg').attr('width', 120).attr('height', 120);
     const side_length = 24;
     const group = legend
-        .append("g")
+        .append('g')
         .attr(
-            "transform",
+            'transform',
             `translate(20, 20)rotate(-45 ${(side_length * colors_per_class) / 2},${
                 (side_length * colors_per_class) / 2
             })`
         );
     const marker = group
-        .append("marker")
-        .attr("id", "arrow")
-        .attr("markerHeight", "10")
-        .attr("markerWidth", "10")
-        .attr("refX", "6")
-        .attr("refY", "3")
-        .attr("orient", "auto");
+        .append('marker')
+        .attr('id', 'arrow')
+        .attr('markerHeight', '10')
+        .attr('markerWidth', '10')
+        .attr('refX', '6')
+        .attr('refY', '3')
+        .attr('orient', 'auto');
 
-    marker.append("path").attr("d", "M0,0L9,3L0,6Z");
+    marker.append('path').attr('d', 'M0,0L9,3L0,6Z');
 
     group
-        .selectAll("rect")
+        .selectAll('rect')
         .data(d3.cross(d3.range(3), d3.range(3)))
         .enter()
-        .append("rect")
-        .attr("width", `${side_length}`)
-        .attr("height", `${side_length}`)
-        .attr("x", (d) => `${d[0] * side_length}`)
-        .attr("y", (d) => `${(colors_per_class - 1 - d[1]) * side_length}`)
-        .attr("fill", (d) => `${bivariate_colors[d[1] * colors_per_class + d[0]]}`);
+        .append('rect')
+        .attr('width', `${side_length}`)
+        .attr('height', `${side_length}`)
+        .attr('x', d => `${d[0] * side_length}`)
+        .attr('y', d => `${(colors_per_class - 1 - d[1]) * side_length}`)
+        .attr('fill', d => `${bivariate_colors[d[1] * colors_per_class + d[0]]}`);
 
     group
-        .append("line")
-        .attr("x1", "0")
-        .attr("x2", `${colors_per_class * side_length}`)
-        .attr("y1", `${colors_per_class * side_length}`)
-        .attr("y2", `${colors_per_class * side_length}`)
-        .attr("marker-end", "url(#arrow)")
-        .attr("stroke", "black")
-        .attr("stroke-width", "1.5");
+        .append('line')
+        .attr('x1', '0')
+        .attr('x2', `${colors_per_class * side_length}`)
+        .attr('y1', `${colors_per_class * side_length}`)
+        .attr('y2', `${colors_per_class * side_length}`)
+        .attr('marker-end', 'url(#arrow)')
+        .attr('stroke', 'black')
+        .attr('stroke-width', '1.5');
 
     group
-        .append("line")
-        .attr("y2", "0")
-        .attr("y1", `${colors_per_class * side_length}`)
-        .attr("marker-end", "url(#arrow)")
-        .attr("stroke", "black")
-        .attr("stroke-width", "1.5");
+        .append('line')
+        .attr('y2', '0')
+        .attr('y1', `${colors_per_class * side_length}`)
+        .attr('marker-end', 'url(#arrow)')
+        .attr('stroke', 'black')
+        .attr('stroke-width', '1.5');
 
     group
-        .append("text")
-        .attr("font-weight", "bold")
-        .attr("dy", "0.71em")
-        .attr("transform", `rotate(90) translate(${(colors_per_class / 2) * side_length},6)`)
-        .attr("text-anchor", "middle")
-        .text("Covid");
+        .append('text')
+        .attr('font-weight', 'bold')
+        .attr('dy', '0.71em')
+        .attr('transform', `rotate(90) translate(${(colors_per_class / 2) * side_length},6)`)
+        .attr('text-anchor', 'middle')
+        .text('Covid');
 
     group
-        .append("text")
-        .attr("font-weight", "bold")
-        .attr("dy", "0.71em")
+        .append('text')
+        .attr('font-weight', 'bold')
+        .attr('dy', '0.71em')
         .attr(
-            "transform",
+            'transform',
             `translate(${(colors_per_class / 2) * side_length},${
                 colors_per_class * side_length + 6
             })`
         )
-        .attr("text-anchor", "middle")
-        .text("Housing");
+        .attr('text-anchor', 'middle')
+        .text('Housing');
 
-    legend.attr("transform", "translate(900,-330)");
+    legend.attr('transform', 'translate(900,-330)');
 };
 
 const slider_time = d3
@@ -147,23 +223,23 @@ const slider_time = d3
     .max(d3.max(date_range))
     .step(1000 * 60 * 60 * 24)
     .width(800)
-    .tickFormat(d3.timeFormat("%m-%d"))
+    .tickFormat(d3.timeFormat('%m-%d'))
     .default(new Date(2020, 0).getTime())
-    .on("onchange", (val) => {
+    .on('onchange', val => {
         let epoch_time = val.getTime();
         updateCountyColor(epoch_time);
         updateCovidLine(epoch_time, null);
     });
 
 const g_time = d3
-    .select("#slider")
-    .attr("align", "center")
-    .append("svg")
-    .attr("width", 860)
-    .attr("height", 100)
-    .attr("stroke-width", "1px")
-    .append("g")
-    .attr("transform", "translate(30,30)");
+    .select('#slider')
+    .attr('align', 'center')
+    .append('svg')
+    .attr('width', 860)
+    .attr('height', 100)
+    .attr('stroke-width', '1px')
+    .append('g')
+    .attr('transform', 'translate(30,30)');
 
 g_time.call(slider_time);
 
@@ -173,7 +249,7 @@ const generateToolTip = (d, states) => {
     let state = states.get(d.id.slice(0, 2)).name;
     let covid_per_population = d.properties.vals.get(day)[0].normalized_covid;
     let covid_count = d.properties.vals.get(day)[0].total_confirmed;
-    let housing = "$" + d.properties.vals.get(day)[0].Zhvi.toLocaleString();
+    let housing = '$' + d.properties.vals.get(day)[0].Zhvi.toLocaleString();
     let percent_change = d.properties.vals.get(day)[0].percent_change;
     return `<p><strong>${county}, ${state}</strong></p>
   <table><tbody>
@@ -187,27 +263,13 @@ const generateToolTip = (d, states) => {
 const x_choropleth_scale = d3.scaleQuantile().range(d3.range(colors_per_class));
 const y_choropleth_scale = d3.scaleQuantile().range(d3.range(-1 * colors_per_class + 1, 1));
 
-const x_panel_scale = d3.scaleTime().domain(d3.extent(date_range)).range([0, panel_width]);
-const y_panel_scale = d3.scaleLinear().range([panel_height, 0]);
-
-const x_axis_panel_call = d3.axisBottom().tickFormat(d3.timeFormat("%b"));
-const y_axis_panel_call = d3.axisLeft();
-
-const x_axis_panel = panel_g.append("g").attr("transform", `translate(0, ${panel_height})`);
-const y_axis_panel = panel_g.append("g");
-
-const panel_line = d3
-    .line()
-    .x((d, i) => x_panel_scale(date_range[i]))
-    .y((d) => y_panel_scale(d));
-
 const path = d3.geoPath();
 
-const parse_date = d3.timeParse("%Y-%m-%d");
-const promises = [d3.json("counties-albers-10m.json"), d3.csv("joined.csv")];
+const parse_date = d3.timeParse('%Y-%m-%d');
+const promises = [d3.json('counties-albers-10m.json'), d3.csv('joined.csv')];
 
 const color = (value, date) => {
-    if (!value || !value.get(date) || !value.get(date)[0].Zhvi) return "#ccc";
+    if (!value || !value.get(date) || !value.get(date)[0].Zhvi) return '#ccc';
     let day_of_interest = value.get(date)[0];
     let percent_change_in_housing = day_of_interest.percent_change;
     let confirmed_covid_cases = day_of_interest.normalized_covid;
@@ -217,29 +279,34 @@ const color = (value, date) => {
     ];
 };
 const alaska = {
-    id: "02013",
+    id: '02013',
     properties: {
-        name: "Aleutians East",
+        name: 'Aleutians East',
     },
 };
 
 const getStatistics = (data, stat) =>
-    [...data.values()].map((inner) => inner.map((d) => d[stat])).flat();
+    [...data.values()].map(inner => inner.map(d => d[stat])).flat();
 
 const getCountyStatistics = (data, county, stat) =>
-    [...data.get(+county).values()].map((day) => day.map((d) => d[stat])).flat();
+    [...data.get(+county).values()].map(day => day.map(d => d[stat])).flat();
 
 const getCrossCountryStatistics = (data, stat) =>
     [...data.values()]
-        .map((county) => [...county.values()])
-        .map((data) => data.map((month) => month.map((day) => day[stat])))
+        .map(county => [...county.values()])
+        .map(data => data.map(month => month.map(day => day[stat])))
         .flat(4);
 
 createLegend();
 
+var housing_chart = timeSeriesChart();
+var covid_chart = timeSeriesChart();
+d3.select('#housing').call(housing_chart);
+d3.select('#covid').call(covid_chart);
+
 Promise.all(promises).then(ready);
 function ready([us, covid]) {
-    covid.forEach((d) => {
+    covid.forEach(d => {
         d.population = +d.population;
         d.total_confirmed = +d.total_confirmed;
         d.Zhvi = +d.Zhvi;
@@ -247,19 +314,13 @@ function ready([us, covid]) {
     });
 
     const counties = topojson.feature(us, us.objects.counties);
-    const states = new Map(us.objects.states.geometries.map((d) => [d.id, d.properties]));
+    const states = new Map(us.objects.states.geometries.map(d => [d.id, d.properties]));
 
     const covid_by_county = d3.group(
         covid,
-        (d) => d.county_fips,
-        (d) => d3.utcDay(parse_date(d.date)).getTime()
+        d => d.county_fips,
+        d => d3.utcDay(parse_date(d.date)).getTime()
     );
-
-    const start_data = getCountyStatistics(covid_by_county, 2013, "total_confirmed");
-
-    y_panel_scale.domain(d3.extent(start_data));
-    x_axis_panel.call(x_axis_panel_call.scale(x_panel_scale));
-    y_axis_panel.call(y_axis_panel_call.scale(y_panel_scale));
 
     counties.features.forEach(function (county) {
         let county_of_interest = covid_by_county.get(+county.id);
@@ -268,10 +329,10 @@ function ready([us, covid]) {
         let price_at_year_start = county_of_interest.get(january_1st_epoch)[0].Zhvi;
 
         for (let [day, data] of county.properties.vals) {
-            for (d of data) {
+            for (let d of data) {
                 d.normalized_covid = d.total_confirmed / d.population;
                 if (price_at_year_start) {
-                    d.percent_change = (price_at_year_start - d.Zhvi) / d.Zhvi;
+                    d.percent_change = (d.Zhvi - price_at_year_start) / price_at_year_start;
                 } else {
                     d.percent_change = 0;
                 }
@@ -279,63 +340,63 @@ function ready([us, covid]) {
         }
     });
 
-    const flattened_covid = getCrossCountryStatistics(covid_by_county, "normalized_covid");
-    const flattened_housing = getCrossCountryStatistics(covid_by_county, "percent_change");
+    const flattened_covid = getCrossCountryStatistics(covid_by_county, 'normalized_covid');
+    const flattened_housing = getCrossCountryStatistics(covid_by_county, 'percent_change');
 
     x_choropleth_scale.domain(flattened_covid);
     y_choropleth_scale.domain(flattened_housing);
 
     const tip = d3
         .tip()
-        .attr("class", "d3-tip")
+        .attr('class', 'd3-tip')
         .html((EVENT, d) => generateToolTip(d, states));
 
     const county_shapes = choropleth_svg
-        .selectAll(".county")
+        .selectAll('.county')
         .data(counties.features)
         .enter()
-        .append("path")
-        .attr("class", "county")
-        .attr("d", path)
-        .on("mouseover", tip.show)
-        .on("mouseout", tip.hide)
-        .on("click", (EVENT, d) => updateCovidLine(slider_time.value().getTime(), d));
+        .append('path')
+        .attr('class', 'county')
+        .attr('d', path)
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide)
+        .on('click', (EVENT, d) => updateCovidLine(slider_time.value().getTime(), d));
 
     choropleth_svg
-        .append("path")
+        .append('path')
         .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
-        .attr("fill", "none")
-        .attr("stroke", "white")
-        .attr("stroke-width", "1px")
-        .attr("stroke-linejoin", "round")
-        .attr("d", path);
+        .attr('fill', 'none')
+        .attr('stroke', 'white')
+        .attr('stroke-width', '1px')
+        .attr('stroke-linejoin', 'round')
+        .attr('d', path);
 
     choropleth_svg.call(tip);
 
-    updateCountyColor = (epoch) => {
-        county_shapes.style("fill", (d) => {
+    updateCountyColor = epoch => {
+        county_shapes.style('fill', d => {
             return color(d.properties.vals, epoch);
         });
     };
 
     updateCovidLine = (date, d) => {
-        var name = d ? d.properties.name : d3.select("#panel").attr("name");
-        var id = d ? d.id : d3.select("#panel").attr("fips");
+        var name = d ? d.properties.name : housing_chart.label().county;
+        var id = d ? d.id : housing_chart.fips();
 
-        const selected_county = covid_by_county.get(+id);
         const state = states.get(id.slice(0, 2)).name;
         const county = name;
-        const full_date_data = getCountyStatistics(covid_by_county, id, "total_confirmed");
-        const data_up_to_date = new Map([...selected_county].filter(([key, val]) => key <= date));
-        const covid_for_county = getStatistics(data_up_to_date, "total_confirmed");
+        const full_date_data = getCountyStatistics(covid_by_county, id, 'total_confirmed');
+        const house_date_data = getCountyStatistics(covid_by_county, id, 'Zhvi');
+        const data = full_date_data.map((d, i) => [date_range[i], d]);
+        const data2 = house_date_data.map((d, i) => [date_range[i], d]).filter(d => d[1] > 0);
 
-        panel_text.text(`${county}, ${state}`);
-        y_panel_scale.domain(d3.extent(full_date_data));
-        y_axis_panel.call(y_axis_panel_call.scale(y_panel_scale));
+        covid_chart.data(data, date);
+        covid_chart.label(county, state);
+        covid_chart.fips(id);
 
-        panel_g.select(".line").attr("d", panel_line(covid_for_county));
-        d3.select("#panel").attr("fips", id);
-        d3.select("#panel").attr("name", name);
+        housing_chart.data(data2, date);
+        housing_chart.label(county, state);
+        housing_chart.fips(id);
     };
 
     updateCountyColor(d3.utcDay(new Date(2020, 0)).getTime());
