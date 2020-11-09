@@ -1,11 +1,12 @@
 import { timeSeriesChart } from './time_series.js';
+import { getStatistics, getCountyStatistics, getCrossCountryStatistics } from './statistics.js';
 
 const choropleth_margin = { right: 50, top: 10, left: 50, bottom: 10 },
     choropleth_width = 1200 - choropleth_margin.right - choropleth_margin.left,
     choropleth_height = 700 - choropleth_margin.top - choropleth_margin.bottom;
 
 const date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
-
+const january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
 var updateCountyColor;
 var updateCovidLine;
 
@@ -173,24 +174,12 @@ const color = (value, date) => {
             x_choropleth_scale(confirmed_covid_cases) * 3
     ];
 };
-const alaska = {
-    id: '02013',
+const atlanta = {
+    id: '13121',
     properties: {
-        name: 'Aleutians East',
+        name: 'Fulton',
     },
 };
-
-const getStatistics = (data, stat) =>
-    [...data.values()].map(inner => inner.map(d => d[stat])).flat();
-
-const getCountyStatistics = (data, county, stat) =>
-    [...data.get(+county).values()].map(day => day.map(d => d[stat])).flat();
-
-const getCrossCountryStatistics = (data, stat) =>
-    [...data.values()]
-        .map(county => [...county.values()])
-        .map(data => data.map(month => month.map(day => day[stat])))
-        .flat(4);
 
 createLegend();
 
@@ -220,7 +209,7 @@ function ready([us, covid]) {
     counties.features.forEach(function (county) {
         let county_of_interest = covid_by_county.get(+county.id);
         county.properties.vals = county_of_interest;
-        let january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
+
         let price_at_year_start = county_of_interest.get(january_1st_epoch)[0].Zhvi;
 
         for (let [day, data] of county.properties.vals) {
@@ -294,6 +283,6 @@ function ready([us, covid]) {
         housing_chart.fips(id);
     };
 
-    updateCountyColor(d3.utcDay(new Date(2020, 0)).getTime());
-    updateCovidLine(d3.utcDay(new Date(2020, 0)).getTime(), alaska);
+    updateCountyColor(january_1st_epoch);
+    updateCovidLine(january_1st_epoch, atlanta);
 }
