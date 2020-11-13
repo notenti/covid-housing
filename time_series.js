@@ -95,14 +95,14 @@ function timeSeriesChart() {
     chart.label = function (county, state) {
         if (!arguments.length) return label;
         label = { state: state, county: county };
-        if (typeof updateData === 'function') updateLabel();
+        if (typeof updateLabel === 'function') updateLabel();
         return chart;
     };
 
     chart.fips = function (value) {
         if (!arguments.length) return fips;
         fips = value;
-        if (typeof updateData === 'function') updateFips();
+        if (typeof updateFips === 'function') updateFips();
         return chart;
     };
 

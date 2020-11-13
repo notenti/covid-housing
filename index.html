@@ -17,7 +17,8 @@
     <meta name="author" content="">
     <title>Zillow Caused Covid</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Playfair+Display:700,900">
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/bumbeishvili/d3-tip-for-v6@4/d3-tip.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -37,19 +38,18 @@
         </header>
         <div class="panels row mb-2">
             <div class="col-md-6">
-                <div
-                    class="row no-gutters border rounded overflow-hidden flex-md-row mb-4 shadow-sm h-md-250">
+                <div class="row no-gutters border rounded overflow-hidden flex-md-row mb-4 shadow-sm h-md-250">
                     <div id="covid"></div>
                 </div>
             </div>
             <div class="col-md-6">
-                <div
-                    class="row no-gutters border rounded overflow-hidden flex-md-row mb-4 shadow-sm h-md-250">
+                <div class="row no-gutters border rounded overflow-hidden flex-md-row mb-4 shadow-sm h-md-250">
                     <div id="housing"></div>
                 </div>
             </div>
         </div>
         <div class="jumbotron p-4 p-md-5 bg-custom border shadow-sm">
+            <div id="select"></div>
             <div id="chart"></div>
             <div id="slider"></div>
             <div id="legend"></div>
@@ -65,6 +65,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="./time_series.js" type="module"></script>
+    <script src="./us_map.js" type="module"></script>
     <script src="./statistics.js" type="module"></script>
     <script src="./choropleth.js" type="module"></script>
 </body>

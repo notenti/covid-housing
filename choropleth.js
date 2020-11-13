@@ -1,28 +1,12 @@
 import { timeSeriesChart } from './time_series.js';
+import { choropleth } from './us_map.js';
 import { getStatistics, getCountyStatistics, getCrossCountryStatistics } from './statistics.js';
-
-const choropleth_margin = { right: 50, top: 10, left: 50, bottom: 10 },
-    choropleth_width = 1200 - choropleth_margin.right - choropleth_margin.left,
-    choropleth_height = 700 - choropleth_margin.top - choropleth_margin.bottom;
 
 const date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
 const january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
-var updateCountyColor;
-var updateCovidLine;
 
-const choropleth_svg = d3
-    .select('#chart')
-    .append('svg')
-    .attr('width', choropleth_width + choropleth_margin.right + choropleth_margin.left)
-    .attr('height', choropleth_height + choropleth_margin.top + choropleth_margin.bottom)
-    .append('g')
-    .attr('transform', `translate(${choropleth_margin.left}, ${choropleth_margin.top})`);
-
-const choropleth_tooltip = d3
-    .select('body')
-    .append('div')
-    .attr('class', 'tooltip')
-    .style('opacity', 0);
+var updateTrendLines;
+var choro;
 
 const bivariate_colors = [
     '#e8e8e8',
@@ -38,6 +22,7 @@ const bivariate_colors = [
 
 const colors_per_class = Math.floor(Math.sqrt(bivariate_colors.length));
 
+// TODO: Move ledend creation into it's own module, perhaps put it in the choropleth one
 const createLegend = () => {
     const legend = d3.select('#legend').append('svg').attr('width', 120).attr('height', 120);
     const side_length = 24;
@@ -123,8 +108,8 @@ const slider_time = d3
     .default(new Date(2020, 0).getTime())
     .on('onchange', val => {
         let epoch_time = val.getTime();
-        updateCountyColor(epoch_time);
-        updateCovidLine(epoch_time, null);
+        updateTrendLines(epoch_time, null);
+        choro.epoch(epoch_time);
     });
 
 const g_time = d3
@@ -139,41 +124,9 @@ const g_time = d3
 
 g_time.call(slider_time);
 
-const generateToolTip = (d, states) => {
-    let day = d3.utcDay(slider_time.value()).getTime();
-    let county = d.properties.name;
-    let state = states.get(d.id.slice(0, 2)).name;
-    let covid_per_population = d.properties.vals.get(day)[0].normalized_covid;
-    let covid_count = d.properties.vals.get(day)[0].total_confirmed;
-    let housing = '$' + d.properties.vals.get(day)[0].Zhvi.toLocaleString();
-    let percent_change = d.properties.vals.get(day)[0].percent_change;
-    return `<p><strong>${county}, ${state}</strong></p>
-  <table><tbody>
-  <tr><td class='wide'>% of population with COVID-19:</td><td> ${(covid_per_population * 100).toFixed(3)}%</td></tr>
-  <tr><td class='wide'>Confirmed COVID-19 cases:</td><td> ${covid_count}</td></tr>
-  <tr><td class='wide'>Median housing cost:</td><td> ${housing}</td></tr>
-  <tr><td class='wide'>% change in housing cost:</td><td> ${(percent_change * 100).toFixed(3)}%</td></tr>
-  </tbody></table>`;
-};
-
-const x_choropleth_scale = d3.scaleQuantile().range(d3.range(colors_per_class));
-const y_choropleth_scale = d3.scaleQuantile().range(d3.range(-1 * colors_per_class + 1, 1));
-
-const path = d3.geoPath();
-
 const parse_date = d3.timeParse('%Y-%m-%d');
 const promises = [d3.json('counties-albers-10m.json'), d3.csv('joined.csv')];
 
-const color = (value, date) => {
-    if (!value || !value.get(date) || !value.get(date)[0].Zhvi) return '#ccc';
-    let day_of_interest = value.get(date)[0];
-    let percent_change_in_housing = day_of_interest.percent_change;
-    let confirmed_covid_cases = day_of_interest.normalized_covid;
-    return bivariate_colors[
-        Math.abs(y_choropleth_scale(percent_change_in_housing)) +
-            x_choropleth_scale(confirmed_covid_cases) * 3
-    ];
-};
 const atlanta = {
     id: '13121',
     properties: {
@@ -183,10 +136,24 @@ const atlanta = {
 
 createLegend();
 
-var housing_chart = timeSeriesChart();
-var covid_chart = timeSeriesChart();
+const housing_chart = timeSeriesChart();
+const covid_chart = timeSeriesChart();
 d3.select('#housing').call(housing_chart);
 d3.select('#covid').call(covid_chart);
+
+// function selectFilter() {
+//     function render(selection) {
+//         selection.each(function () {
+//             d3.select(this).html(
+//                 '<form>' +
+//                     "<input type='radio' name='data' value='housing' checked> Housing<br>" +
+//                     "<input type='radio' name='data' value='covid'> COVID-19<br>" +
+//                     '</form>'
+//             );
+//         });
+//     }
+//     return render;
+// }
 
 Promise.all(promises).then(ready);
 function ready([us, covid]) {
@@ -199,6 +166,7 @@ function ready([us, covid]) {
 
     const counties = topojson.feature(us, us.objects.counties);
     const states = new Map(us.objects.states.geometries.map(d => [d.id, d.properties]));
+    const mesh = topojson.mesh(us, us.objects.states, (a, b) => a !== b);
 
     const covid_by_county = d3.group(
         covid,
@@ -227,43 +195,7 @@ function ready([us, covid]) {
     const flattened_covid = getCrossCountryStatistics(covid_by_county, 'normalized_covid');
     const flattened_housing = getCrossCountryStatistics(covid_by_county, 'percent_change');
 
-    x_choropleth_scale.domain(flattened_covid);
-    y_choropleth_scale.domain(flattened_housing);
-
-    const tip = d3
-        .tip()
-        .attr('class', 'd3-tip')
-        .html((EVENT, d) => generateToolTip(d, states));
-
-    const county_shapes = choropleth_svg
-        .selectAll('.county')
-        .data(counties.features)
-        .enter()
-        .append('path')
-        .attr('class', 'county')
-        .attr('d', path)
-        .on('mouseover', tip.show)
-        .on('mouseout', tip.hide)
-        .on('click', (EVENT, d) => updateCovidLine(slider_time.value().getTime(), d));
-
-    choropleth_svg
-        .append('path')
-        .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
-        .attr('fill', 'none')
-        .attr('stroke', 'white')
-        .attr('stroke-width', '1px')
-        .attr('stroke-linejoin', 'round')
-        .attr('d', path);
-
-    choropleth_svg.call(tip);
-
-    updateCountyColor = epoch => {
-        county_shapes.style('fill', d => {
-            return color(d.properties.vals, epoch);
-        });
-    };
-
-    updateCovidLine = (date, d) => {
+    updateTrendLines = (date, d) => {
         var name = d ? d.properties.name : housing_chart.label().county;
         var id = d ? d.id : housing_chart.fips();
 
@@ -283,6 +215,22 @@ function ready([us, covid]) {
         housing_chart.fips(id);
     };
 
-    updateCountyColor(january_1st_epoch);
-    updateCovidLine(january_1st_epoch, atlanta);
+    choro = choropleth(counties, states, mesh);
+    d3.select('#chart').call(choro);
+    choro
+        .colors(bivariate_colors)
+        .covid(flattened_covid)
+        .housing(flattened_housing)
+        .epoch(january_1st_epoch)
+        .handler(updateTrendLines);
+
+    // d3.select('#select').call(selectFilter());
+    // var filter = d3.select('#select input[name="data"]:checked').node().value;
+
+    // d3.selectAll("#select input[name='data']").on('change', function () {
+    //     filter = d3.select('#select input[name="data"]:checked').node().value;
+    //     console.log(filter);
+    // });
+
+    updateTrendLines(january_1st_epoch, atlanta);
 }
