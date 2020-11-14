@@ -2,7 +2,7 @@ import { timeSeriesChart } from './time_series.js';
 import { choropleth } from './us_map.js';
 import { getStatistics, getCountyStatistics, getCrossCountryStatistics } from './statistics.js';
 
-const date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
+const date_range = d3.utcDays(new Date(2020, 1), new Date(2020, 9));
 const january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
 
 var updateTrendLines;
@@ -160,6 +160,7 @@ function ready([us, covid]) {
     covid.forEach(d => {
         d.population = +d.population;
         d.total_confirmed = +d.total_confirmed;
+        d.new_confirmed = +d.new_confirmed;
         d.Zhvi = +d.Zhvi;
         d.county_fips = +d.county_fips;
     });
@@ -185,11 +186,9 @@ function ready([us, covid]) {
         for (let [day, data] of county.properties.vals) {
             for (let d of data) {
                 d.normalized_covid = d.total_confirmed / d.population;
-                let approx_month = Math.floor(i / 30);
+                d.normalized_new_covid = d.new_confirmed / d.population;
                 if (price_at_year_start) {
-                    d.percent_change =
-                        ((12 / approx_month) * (d.Zhvi - price_at_year_start)) /
-                        price_at_year_start;
+                    d.percent_change = ((d.Zhvi) / price_at_year_start) ** (365 / i) - 1 ;
                 } else {
                     d.percent_change = 0;
                 }
