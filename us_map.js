@@ -14,14 +14,22 @@ function choropleth(counties, states, mesh) {
     var colors_per_class = 0;
 
     var x = d3.scaleQuantile();
-    var y = d3.scaleQuantile();
+    var y = housing_percent => {
+        if (housing_percent > 0.06) {
+            return 2;
+        } else if (housing_percent > 0.01) {
+            return 1;
+        } else {
+            return 0;
+        }
+    };
 
     const color = value => {
         if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
         let day_of_interest = value.get(epoch)[0];
         let percent_change_in_housing = day_of_interest.percent_change;
         let confirmed_covid_cases = day_of_interest.normalized_covid;
-        return colors[Math.abs(y(percent_change_in_housing)) + x(confirmed_covid_cases) * 3];
+        return colors[y(percent_change_in_housing) + x(confirmed_covid_cases) * colors_per_class];
     };
 
     const generateToolTip = d => {
@@ -37,8 +45,8 @@ function choropleth(counties, states, mesh) {
           covid_per_population * 100
       ).toFixed(3)}%</td></tr>
       <tr><td class='wide'>Confirmed COVID-19 cases:</td><td> ${covid_count}</td></tr>
-      <tr><td class='wide'>Median housing cost:</td><td> ${housing}</td></tr>
-      <tr><td class='wide'>% change in housing cost:</td><td> ${(percent_change * 100).toFixed(
+      <tr><td class='wide'>ZHVI:</td><td> ${housing}</td></tr>
+      <tr><td class='wide'>Annualzied ZHVI Change:</td><td> ${(percent_change * 100).toFixed(
           3
       )}%</td></tr>
       </tbody></table>`;
@@ -98,7 +106,6 @@ function choropleth(counties, states, mesh) {
             updateColors = function () {
                 colors_per_class = Math.floor(Math.sqrt(colors.length));
                 x.range(d3.range(colors_per_class));
-                y.range(d3.range(-1 * colors_per_class + 1, 1));
             };
         });
     }

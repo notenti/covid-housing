@@ -180,15 +180,21 @@ function ready([us, covid]) {
 
         let price_at_year_start = county_of_interest.get(january_1st_epoch)[0].Zhvi;
 
+        // This math is not right (should be exponential instead of multiply by inverse of month)
+        let i = 0;
         for (let [day, data] of county.properties.vals) {
             for (let d of data) {
                 d.normalized_covid = d.total_confirmed / d.population;
+                let approx_month = Math.floor(i / 30);
                 if (price_at_year_start) {
-                    d.percent_change = (d.Zhvi - price_at_year_start) / price_at_year_start;
+                    d.percent_change =
+                        ((12 / approx_month) * (d.Zhvi - price_at_year_start)) /
+                        price_at_year_start;
                 } else {
                     d.percent_change = 0;
                 }
             }
+            i += 1;
         }
     });
 
@@ -220,7 +226,6 @@ function ready([us, covid]) {
     choro
         .colors(bivariate_colors)
         .covid(flattened_covid)
-        .housing(flattened_housing)
         .epoch(january_1st_epoch)
         .handler(updateTrendLines);
 
