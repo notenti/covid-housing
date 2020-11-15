@@ -38,16 +38,14 @@ function choropleth(counties, states, mesh) {
         if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
         let day_of_interest = value.get(epoch)[0];
         let percent_change_in_housing = day_of_interest.percent_change;
-        let confirmed_covid_cases = day_of_interest.normalized_covid;
-        return colors[y(percent_change_in_housing) + x(confirmed_covid_cases) * colors_per_class];
+        return colors[y(percent_change_in_housing)];
     };
 
     const covidColors = value => {
         if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
         let day_of_interest = value.get(epoch)[0];
-        let percent_change_in_housing = day_of_interest.percent_change;
         let confirmed_covid_cases = day_of_interest.normalized_covid;
-        return colors[y(percent_change_in_housing) + x(confirmed_covid_cases) * colors_per_class];
+        return colors[x(confirmed_covid_cases) * colors_per_class];
     };
 
     const generateToolTip = d => {

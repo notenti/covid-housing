@@ -146,7 +146,8 @@ function selectFilter() {
         selection.each(function () {
             d3.select(this).html(
                 '<form>' +
-                    "<input type='radio' name='data' value='housing' checked> Housing<br>" +
+                    "<input type='radio' name='data' value='both' checked> Both<br>" +
+                    "<input type='radio' name='data' value='housing'> Housing<br>" +
                     "<input type='radio' name='data' value='covid'> COVID-19<br>" +
                     '</form>'
             );
@@ -188,7 +189,7 @@ function ready([us, covid]) {
                 d.normalized_covid = d.total_confirmed / d.population;
                 d.normalized_new_covid = d.new_confirmed / d.population;
                 if (price_at_year_start) {
-                    d.percent_change = ((d.Zhvi) / price_at_year_start) ** (365 / i) - 1 ;
+                    d.percent_change = (d.Zhvi / price_at_year_start) ** (365 / i) - 1;
                 } else {
                     d.percent_change = 0;
                 }
@@ -198,7 +199,6 @@ function ready([us, covid]) {
     });
 
     const flattened_covid = getCrossCountryStatistics(covid_by_county, 'normalized_covid');
-    const flattened_housing = getCrossCountryStatistics(covid_by_county, 'percent_change');
 
     updateTrendLines = (date, d) => {
         var name = d ? d.properties.name : housing_chart.label().county;
@@ -233,7 +233,7 @@ function ready([us, covid]) {
 
     d3.selectAll("#select input[name='data']").on('change', function () {
         filter = d3.select('#select input[name="data"]:checked').node().value;
-        choro.colorScheme(filter)
+        choro.colorScheme(filter);
     });
 
     updateTrendLines(january_1st_epoch, atlanta);
