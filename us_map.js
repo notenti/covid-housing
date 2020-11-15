@@ -33,7 +33,6 @@ function choropleth(counties, states, mesh) {
     };
 
     const generateToolTip = d => {
-        console.log(d.properties.vals.get(epoch)[0]);
         let county = d.properties.name;
         let state = states.get(d.id.slice(0, 2)).name;
         let covid_per_population = d.properties.vals.get(epoch)[0].normalized_covid;
