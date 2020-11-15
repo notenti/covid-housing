@@ -6,7 +6,7 @@ function choropleth(counties, states, mesh) {
     var updateCovid;
     var updateHousing;
     var updateColors;
-    var epoch;
+    var epoch = new Date(2020);
     var flattened_covid = [];
     var flattened_housing = [];
     var colors = [];
@@ -24,7 +24,25 @@ function choropleth(counties, states, mesh) {
         }
     };
 
-    const color = value => {
+    const bivariateColors = value => {
+        if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
+        let day_of_interest = value.get(epoch)[0];
+        let percent_change_in_housing = day_of_interest.percent_change;
+        let confirmed_covid_cases = day_of_interest.normalized_covid;
+        return colors[y(percent_change_in_housing) + x(confirmed_covid_cases) * colors_per_class];
+    };
+
+    var colorScheme = bivariateColors;
+
+    const housingColors = value => {
+        if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
+        let day_of_interest = value.get(epoch)[0];
+        let percent_change_in_housing = day_of_interest.percent_change;
+        let confirmed_covid_cases = day_of_interest.normalized_covid;
+        return colors[y(percent_change_in_housing) + x(confirmed_covid_cases) * colors_per_class];
+    };
+
+    const covidColors = value => {
         if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
         let day_of_interest = value.get(epoch)[0];
         let percent_change_in_housing = day_of_interest.percent_change;
@@ -93,7 +111,7 @@ function choropleth(counties, states, mesh) {
 
             updateEpoch = function () {
                 cou.style('fill', d => {
-                    return color(d.properties.vals);
+                    return colorScheme(d.properties.vals);
                 });
             };
 
@@ -142,6 +160,19 @@ function choropleth(counties, states, mesh) {
         if (!arguments.length) return colors;
         colors = value;
         if (typeof updateColors === 'function') updateColors();
+        return chart;
+    };
+
+    chart.colorScheme = function (value) {
+        if (!arguments.length) return colorScheme;
+        if (value === 'housing') {
+            colorScheme = housingColors;
+        } else if (value === 'covid') {
+            colorScheme = covidColors;
+        } else {
+            colorScheme = bivariateColors;
+        }
+        if (typeof updateColors === 'function') updateEpoch();
         return chart;
     };
 
