@@ -16,11 +16,11 @@ function choropleth(counties, states, mesh) {
     var x = d3.scaleQuantile();
     var y = housing_percent => {
         if (housing_percent > 0.06) {
-            return 2;
-        } else if (housing_percent > 0.01) {
+            return 0;
+        } else if (housing_percent > 0.02) {
             return 1;
         } else {
-            return 0;
+            return 2;
         }
     };
 
@@ -37,6 +37,7 @@ function choropleth(counties, states, mesh) {
         let state = states.get(d.id.slice(0, 2)).name;
         let covid_per_population = d.properties.vals.get(epoch)[0].normalized_covid;
         let covid_count = d.properties.vals.get(epoch)[0].total_confirmed;
+        let new_covid_count = d.properties.vals.get(epoch)[0].new_confirmed;
         let housing = '$' + d.properties.vals.get(epoch)[0].Zhvi.toLocaleString();
         let percent_change = d.properties.vals.get(epoch)[0].percent_change;
         return `<p><strong>${county}, ${state}</strong></p>
@@ -45,8 +46,9 @@ function choropleth(counties, states, mesh) {
           covid_per_population * 100
       ).toFixed(3)}%</td></tr>
       <tr><td class='wide'>Confirmed COVID-19 cases:</td><td> ${covid_count}</td></tr>
-      <tr><td class='wide'>ZHVI:</td><td> ${housing}</td></tr>
-      <tr><td class='wide'>Annualzied ZHVI Change:</td><td> ${(percent_change * 100).toFixed(
+      <tr><td class='wide'>New COVID-19 cases:</td><td> ${new_covid_count}</td></tr>
+      <tr><td class='wide'>Smoothed ZHVI:</td><td> ${housing}</td></tr>
+      <tr><td class='wide'>Estimated Annualzied ZHVI Change:</td><td> ${(percent_change * 100).toFixed(
           3
       )}%</td></tr>
       </tbody></table>`;
