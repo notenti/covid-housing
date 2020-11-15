@@ -141,19 +141,19 @@ const covid_chart = timeSeriesChart();
 d3.select('#housing').call(housing_chart);
 d3.select('#covid').call(covid_chart);
 
-// function selectFilter() {
-//     function render(selection) {
-//         selection.each(function () {
-//             d3.select(this).html(
-//                 '<form>' +
-//                     "<input type='radio' name='data' value='housing' checked> Housing<br>" +
-//                     "<input type='radio' name='data' value='covid'> COVID-19<br>" +
-//                     '</form>'
-//             );
-//         });
-//     }
-//     return render;
-// }
+function selectFilter() {
+    function render(selection) {
+        selection.each(function () {
+            d3.select(this).html(
+                '<form>' +
+                    "<input type='radio' name='data' value='housing' checked> Housing<br>" +
+                    "<input type='radio' name='data' value='covid'> COVID-19<br>" +
+                    '</form>'
+            );
+        });
+    }
+    return render;
+}
 
 Promise.all(promises).then(ready);
 function ready([us, covid]) {
@@ -228,13 +228,13 @@ function ready([us, covid]) {
         .epoch(january_1st_epoch)
         .handler(updateTrendLines);
 
-    // d3.select('#select').call(selectFilter());
-    // var filter = d3.select('#select input[name="data"]:checked').node().value;
+    d3.select('#select').call(selectFilter());
+    var filter = d3.select('#select input[name="data"]:checked').node().value;
 
-    // d3.selectAll("#select input[name='data']").on('change', function () {
-    //     filter = d3.select('#select input[name="data"]:checked').node().value;
-    //     console.log(filter);
-    // });
+    d3.selectAll("#select input[name='data']").on('change', function () {
+        filter = d3.select('#select input[name="data"]:checked').node().value;
+        choro.colorScheme(filter)
+    });
 
     updateTrendLines(january_1st_epoch, atlanta);
 }
