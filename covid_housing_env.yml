@@ -1,4 +1,4 @@
-name: dream-team
+name: covid_housing
 channels:
   - conda-forge
   - defautls
@@ -6,3 +6,4 @@ dependencies:
   - python=3.7
   - pandas
   - numpy
+  - scipy
