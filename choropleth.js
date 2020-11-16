@@ -82,7 +82,7 @@ const createLegend = () => {
         .attr('dy', '0.71em')
         .attr('transform', `rotate(90) translate(${(colors_per_class / 2) * side_length},6)`)
         .attr('text-anchor', 'middle')
-        .text('Covid');
+        .text('Risk');
 
     group
         .append('text')
@@ -95,7 +95,7 @@ const createLegend = () => {
             })`
         )
         .attr('text-anchor', 'middle')
-        .text('Housing');
+        .text('ZHVI');
 
     legend.attr('transform', 'translate(900,-330)');
 };
@@ -107,7 +107,7 @@ const slider_time = d3
     .step(1000 * 60 * 60 * 24)
     .width(800)
     .tickFormat(d3.timeFormat('%m-%d'))
-    .default(new Date(2020, 0).getTime())
+    .default(february_1st_epoch)
     .on('onchange', val => {
         let epoch_time = val.getTime();
         updateTrendLines(epoch_time, null);

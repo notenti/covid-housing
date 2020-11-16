@@ -18,11 +18,9 @@ function choropleth(counties, states, mesh) {
         if (population < 300000) {
             if (new_covid_cases > 10) {
                 return 2;
-            }
-            else if (new_covid_cases > 6) {
+            } else if (new_covid_cases > 6) {
                 return 1;
-            }
-            else {
+            } else {
                 return 0;
             }
         }
@@ -30,16 +28,14 @@ function choropleth(counties, states, mesh) {
         else {
             if (new_covid_cases > 500) {
                 return 2;
-            }
-            else if (new_covid_cases > 250) {
+            } else if (new_covid_cases > 250) {
                 return 1;
-            }
-            else {
+            } else {
                 return 0;
             }
         }
     };
-    var y = (housing_percent) => {
+    var y = housing_percent => {
         if (housing_percent > 0.06) {
             return 0;
         } else if (housing_percent > 0.02) {
@@ -54,8 +50,10 @@ function choropleth(counties, states, mesh) {
         let day_of_interest = value.get(epoch)[0];
         let percent_change_in_housing = day_of_interest.percent_change;
         let seven_day_avg_new = day_of_interest.seven_day_avg_new;
-        let population = day_of_interest.population
-        return colors[y(percent_change_in_housing) + x(seven_day_avg_new, population) * colors_per_class];
+        let population = day_of_interest.population;
+        return colors[
+            y(percent_change_in_housing) + x(seven_day_avg_new, population) * colors_per_class
+        ];
     };
 
     var colorScheme = bivariateColors;
@@ -69,6 +67,7 @@ function choropleth(counties, states, mesh) {
 
     const covidColors = value => {
         if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
+        let day_of_interest = value.get(epoch)[0];
         let seven_day_avg_new = day_of_interest.seven_day_avg_new;
         let population = day_of_interest.population;
         return colors[x(seven_day_avg_new, population) * colors_per_class];
@@ -77,22 +76,20 @@ function choropleth(counties, states, mesh) {
     const generateToolTip = d => {
         let county = d.properties.name;
         let state = states.get(d.id.slice(0, 2)).name;
-        let covid_per_population = d.properties.vals.get(epoch)[0].normalized_covid;
+        let covid_per_population = d3.format('.3p')(
+            d.properties.vals.get(epoch)[0].normalized_covid
+        );
         let covid_count = d.properties.vals.get(epoch)[0].total_confirmed;
         let new_covid_count = d.properties.vals.get(epoch)[0].new_confirmed;
-        let housing = '$' + d.properties.vals.get(epoch)[0].Zhvi.toLocaleString();
-        let percent_change = d.properties.vals.get(epoch)[0].percent_change;
+        let housing = d3.format('($,.0f')(d.properties.vals.get(epoch)[0].Zhvi);
+        let percent_change = d3.format('.3p')(d.properties.vals.get(epoch)[0].percent_change);
         return `<p><strong>${county}, ${state}</strong></p>
       <table><tbody>
-      <tr><td class='wide'>% of population with COVID-19:</td><td> ${(
-          covid_per_population * 100
-      ).toFixed(3)}%</td></tr>
+      <tr><td class='wide'>% of population with COVID-19:</td><td> ${covid_per_population}</td></tr>
       <tr><td class='wide'>Confirmed COVID-19 cases:</td><td> ${covid_count}</td></tr>
       <tr><td class='wide'>New COVID-19 cases:</td><td> ${new_covid_count}</td></tr>
       <tr><td class='wide'>Smoothed ZHVI:</td><td> ${housing}</td></tr>
-      <tr><td class='wide'>Estimated Annualzied ZHVI Change:</td><td> ${(percent_change * 100).toFixed(
-          3
-      )}%</td></tr>
+      <tr><td class='wide'>Estimated Annualized ZHVI Change:</td><td> ${percent_change}</td></tr>
       </tbody></table>`;
     };
 
@@ -139,8 +136,7 @@ function choropleth(counties, states, mesh) {
                 });
             };
 
-            updateCovid = function () {
-            };
+            updateCovid = function () {};
 
             updateHousing = function () {
                 y.domain(flattened_housing);
