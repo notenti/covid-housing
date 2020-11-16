@@ -119,7 +119,11 @@ function choropleth(counties, states, mesh) {
                 .attr('d', path)
                 .on('mouseover', tip.show)
                 .on('mouseout', tip.hide)
-                .on('click', (EVENT, d) => handler(epoch, d));
+                .on('click', (EVENT, d) => {
+                    GAevent('map', 'county', d.properties.name); // GA Event
+                    handler(epoch, d)
+                }
+                );
 
             svg.append('path')
                 .datum(mesh)
