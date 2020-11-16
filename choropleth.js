@@ -136,9 +136,8 @@ const atlanta = {
 
 createLegend();
 
-const housing_chart = timeSeriesChart();
+
 const covid_chart = timeSeriesChart();
-d3.select('#housing').call(housing_chart);
 d3.select('#covid').call(covid_chart);
 
 function selectFilter() {
@@ -201,23 +200,20 @@ function ready([us, covid]) {
     const flattened_covid = getCrossCountryStatistics(covid_by_county, 'normalized_covid');
 
     updateTrendLines = (date, d) => {
-        var name = d ? d.properties.name : housing_chart.label().county;
-        var id = d ? d.id : housing_chart.fips();
+        var name = d ? d.properties.name : covid_chart.label().county;
+        var id = d ? d.id : covid_chart.fips();
 
         const state = states.get(id.slice(0, 2)).name;
         const county = name;
         const full_date_data = getCountyStatistics(covid_by_county, id, 'total_confirmed');
         const house_date_data = getCountyStatistics(covid_by_county, id, 'Zhvi');
-        const data = full_date_data.map((d, i) => [date_range[i], d]);
+        const data = full_date_data.map((d, i) => [date_range[i], d, house_date_data[i]]);
         const data2 = house_date_data.map((d, i) => [date_range[i], d]).filter(d => d[1] > 0);
 
         covid_chart.data(data, date);
         covid_chart.label(county, state);
         covid_chart.fips(id);
 
-        housing_chart.data(data2, date);
-        housing_chart.label(county, state);
-        housing_chart.fips(id);
     };
 
     choro = choropleth(counties, states, mesh);

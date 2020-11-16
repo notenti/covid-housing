@@ -1,6 +1,6 @@
 function timeSeriesChart() {
-    var margin = { top: 20, right: 50, bottom: 40, left: 50 };
-    var width = 500 - margin.left - margin.right;
+    var margin = { top: 20, right: 80, bottom: 40, left: 80 };
+    var width = 1000 - margin.left - margin.right;
     var height = 300 - margin.top - margin.bottom;
     var updateData;
     var updateLabel;
@@ -10,20 +10,28 @@ function timeSeriesChart() {
     var label;
     var fips;
 
-    var xScale = d3.scaleTime();
-    var yScale = d3.scaleLinear();
-    var xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat('%b'));
-    var yAxis = d3.axisLeft(yScale);
+    var x = d3.scaleTime();
+    var yLeft = d3.scaleLinear();
+    var yRight = d3.scaleLinear();
+    var xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat('%b'));
+    var yAxisLeft = d3.axisLeft(yLeft);
+    var yAxisRight = d3.axisRight(yRight);
 
     function chart(selection) {
         selection.each(function () {
-            xScale.domain(d3.extent(data, d => d[0])).range([0, width]);
-            yScale.domain(d3.extent(data, d => d[1])).range([height, 0]);
+            x.domain(d3.extent(data, d => d[0])).range([0, width]);
+            yLeft.domain(d3.extent(data, d => d[1])).range([height, 0]);
+            yRight.domain(d3.extent(data, d => d[2])).range([height, 0]);
 
-            var line = d3
+            var covLine = d3
                 .line()
-                .x(d => xScale(d[0]))
-                .y(d => yScale(d[1]));
+                .x(d => x(d[0]))
+                .y(d => yLeft(d[1]));
+
+            var housingLine = d3
+                .line()
+                .x(d => x(d[0]))
+                .y(d => yRight(d[2]));
 
             var dom = d3.select(this);
 
@@ -39,40 +47,69 @@ function timeSeriesChart() {
                 .attr('y', margin.top * 2)
                 .attr('text-anchor', 'middle')
                 .style('fill', '#3b4994')
-                .style('font-size', '16px')
+                .style('font-size', '18px')
+                .style('font-family', 'Source Sans Pro');
+
+            svg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', 0 - ((height + margin.top + margin.bottom)/2))
+                .attr('y', 0)
+                .attr('dy', '1em')
+                .style('text-anchor', 'middle')
+                .style('fill', '#3b4994')
+                .text('Confirmed COVID-19 Cases')
+                .style('font-size', '14px')
                 .style('font-family', 'Source Sans Pro');
 
             var genter = svg
                 .append('g')
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-            genter.append('g').attr('class', 'x axis');
-            genter.append('g').attr('class', 'y axis');
-            genter.append('path').attr('class', 'line');
+            genter.append('g').attr('class', 'x-axis');
+            genter.append('g').attr('class', 'y-axis-left');
+            genter.append('path').attr('class', 'cov-line');
+            genter
+                .append('g')
+                .attr('transform', `translate(${width}, 0)`)
+                .attr('class', 'y-axis-right');
+            genter.append('path').attr('class', 'housing-line');
 
             var g = svg.select('g');
 
-            var lines = g
-                .select('.line')
+            var covLines = g
+                .select('.cov-line')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', '#be64ac')
+                .attr('stroke-width', 2)
+                .attr('d', covLine);
+
+            var housingLines = g
+                .select('.housing-line')
                 .datum(data)
                 .attr('fill', 'none')
                 .attr('stroke', 'steelblue')
-                .attr('stroke-width', 1.5)
-                .attr('d', line);
+                .attr('stroke-width', 2)
+                .attr('d', housingLine);
 
-            svg.select('.x.axis')
-                .attr('transform', 'translate(0,' + yScale.range()[0] + ')')
+            svg.select('.x-axis')
+                .attr('transform', 'translate(0,' + yLeft.range()[0] + ')')
                 .call(xAxis);
-            svg.select('.y.axis').call(yAxis);
+            svg.select('.y-axis-left').call(yAxisLeft);
+            svg.select('.y-axis-right').call(yAxisRight);
 
             updateData = function () {
                 const data_up_to_date = data.filter(([key, val]) => key <= date);
-                var update = g.select('.line').datum(data_up_to_date);
-                xScale.domain(d3.extent(data, d => d[0])).range([0, width]);
-                yScale.domain(d3.extent(data, d => d[1])).range([height, 0]);
-                svg.select('.x.axis').call(xAxis);
-                svg.select('.y.axis').call(yAxis);
-                update.transition().duration(1000).attr('d', line);
+                var covUpdate = g.select('.cov-line').datum(data_up_to_date);
+                var housingUpdate = g.select('.housing-line').datum(data_up_to_date);
+                x.domain(d3.extent(data, d => d[0])).range([0, width]);
+                yLeft.domain(d3.extent(data, d => d[1])).range([height, 0]);
+                yRight.domain(d3.extent(data, d => d[2])).range([height, 0]);
+                svg.select('.x-axis').call(xAxis);
+                svg.select('.y-axis-left').call(yAxisLeft);
+                svg.select('.y-axis-right').call(yAxisRight);
+                covUpdate.transition().duration(1000).attr('d', covLine);
+                housingUpdate.transition().duration(1000).attr('d', housingLine);
             };
 
             updateLabel = function () {
