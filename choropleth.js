@@ -2,8 +2,10 @@ import { timeSeriesChart } from './time_series.js';
 import { choropleth } from './us_map.js';
 import { getStatistics, getCountyStatistics, getCrossCountryStatistics } from './statistics.js';
 
-const date_range = d3.utcDays(new Date(2020, 1), new Date(2020, 9));
+const dates_of_interest = d3.utcDays(new Date(2020, 1), new Date(2020, 9));
+const full_date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
 const january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
+const february_1st_epoch = d3.utcDay(new Date(2020, 1)).getTime();
 
 var updateTrendLines;
 var choro;
@@ -100,8 +102,8 @@ const createLegend = () => {
 
 const slider_time = d3
     .sliderBottom()
-    .min(d3.min(date_range))
-    .max(d3.max(date_range))
+    .min(d3.min(dates_of_interest))
+    .max(d3.max(dates_of_interest))
     .step(1000 * 60 * 60 * 24)
     .width(800)
     .tickFormat(d3.timeFormat('%m-%d'))
@@ -135,7 +137,6 @@ const atlanta = {
 };
 
 createLegend();
-
 
 const covid_chart = timeSeriesChart();
 d3.select('#covid').call(covid_chart);
@@ -207,13 +208,13 @@ function ready([us, covid]) {
         const county = name;
         const full_date_data = getCountyStatistics(covid_by_county, id, 'total_confirmed');
         const house_date_data = getCountyStatistics(covid_by_county, id, 'Zhvi');
-        const data = full_date_data.map((d, i) => [date_range[i], d, house_date_data[i]]);
-        const data2 = house_date_data.map((d, i) => [date_range[i], d]).filter(d => d[1] > 0);
+        const data = full_date_data.map((d, i) => [full_date_range[i], d, house_date_data[i]]);
 
-        covid_chart.data(data, date);
+        let filtered = data.filter(d => d[0] >= february_1st_epoch)
+
+        covid_chart.data(filtered, date);
         covid_chart.label(county, state);
         covid_chart.fips(id);
-
     };
 
     choro = choropleth(counties, states, mesh);
@@ -232,5 +233,5 @@ function ready([us, covid]) {
         choro.colorScheme(filter);
     });
 
-    updateTrendLines(january_1st_epoch, atlanta);
+    updateTrendLines(february_1st_epoch, atlanta);
 }

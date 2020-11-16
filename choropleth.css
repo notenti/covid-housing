@@ -38,3 +38,7 @@ h1, h2, h3, h4, h5, h6 {
 .y-axis-left text {
     fill: #be64ac;
 }
+
+.y-axis-right text {
+    fill: #5698b9;
+}

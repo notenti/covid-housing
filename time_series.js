@@ -14,8 +14,8 @@ function timeSeriesChart() {
     var yLeft = d3.scaleLinear();
     var yRight = d3.scaleLinear();
     var xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat('%b'));
-    var yAxisLeft = d3.axisLeft(yLeft);
-    var yAxisRight = d3.axisRight(yRight);
+    var yAxisLeft = d3.axisLeft(yLeft).ticks(8).tickFormat(d3.format('~s'));
+    var yAxisRight = d3.axisRight(yRight).ticks(8).tickFormat(d3.format('$~s'));
 
     function chart(selection) {
         selection.each(function () {
@@ -52,12 +52,23 @@ function timeSeriesChart() {
 
             svg.append('text')
                 .attr('transform', 'rotate(-90)')
-                .attr('x', 0 - ((height + margin.top + margin.bottom)/2))
-                .attr('y', 0)
+                .attr('x', 0 - (height + margin.top + margin.bottom) / 2)
+                .attr('y', 10)
                 .attr('dy', '1em')
                 .style('text-anchor', 'middle')
                 .style('fill', '#3b4994')
                 .text('Confirmed COVID-19 Cases')
+                .style('font-size', '14px')
+                .style('font-family', 'Source Sans Pro');
+
+            svg.append('text')
+                .attr('transform', 'rotate(90)')
+                .attr('x', (height + margin.top + margin.bottom) / 2)
+                .attr('y', -990)
+                .attr('dy', '1em')
+                .style('text-anchor', 'middle')
+                .style('fill', '#3b4994')
+                .text('ZHVI')
                 .style('font-size', '14px')
                 .style('font-family', 'Source Sans Pro');
 
@@ -88,7 +99,7 @@ function timeSeriesChart() {
                 .select('.housing-line')
                 .datum(data)
                 .attr('fill', 'none')
-                .attr('stroke', 'steelblue')
+                .attr('stroke', '#5698b9')
                 .attr('stroke-width', 2)
                 .attr('d', housingLine);
 
