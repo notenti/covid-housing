@@ -4,7 +4,7 @@
 
 ## Installation
 
-Clone the repository and follow the directions in [prepare the data](prepare-the-data). Place the dataset in the root of the repository.
+Clone the repository and follow the directions in prepare the data. Place the dataset in the root of the repository.
 
 ## Usage
 
