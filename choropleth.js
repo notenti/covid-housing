@@ -182,12 +182,14 @@ function ready([us, covid]) {
 
         let price_at_year_start = county_of_interest.get(january_1st_epoch)[0].Zhvi;
 
-        // This math is not right (should be exponential instead of multiply by inverse of month)
+        let new_cases_last_week = Array(14).fill(0);
         let i = 0;
         for (let [day, data] of county.properties.vals) {
             for (let d of data) {
+                new_cases_last_week.pop();
+                new_cases_last_week.unshift(d.new_confirmed);
                 d.normalized_covid = d.total_confirmed / d.population;
-                d.normalized_new_covid = d.new_confirmed / d.population;
+                d.seven_day_avg_new = new_cases_last_week.reduce((a, b) => a + b);
                 if (price_at_year_start) {
                     d.percent_change = (d.Zhvi / price_at_year_start) ** (365 / i) - 1;
                 } else {
