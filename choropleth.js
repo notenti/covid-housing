@@ -182,7 +182,7 @@ function ready([us, covid]) {
 
         let price_at_year_start = county_of_interest.get(january_1st_epoch)[0].Zhvi;
 
-        let new_cases_last_week = Array(7).fill(0);
+        let new_cases_last_week = Array(14).fill(0);
         let i = 0;
         for (let [day, data] of county.properties.vals) {
             for (let d of data) {
