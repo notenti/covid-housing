@@ -2,8 +2,8 @@ import { timeSeriesChart } from './time_series.js';
 import { choropleth } from './us_map.js';
 import { getStatistics, getCountyStatistics, getCrossCountryStatistics } from './statistics.js';
 
-const dates_of_interest = d3.utcDays(new Date(2020, 1), new Date(2020, 9));
-const full_date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 9));
+const dates_of_interest = d3.utcDays(new Date(2020, 1), new Date(2020, 12, 31));
+const full_date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 12, 31));
 const january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
 const february_1st_epoch = d3.utcDay(new Date(2020, 1)).getTime();
 

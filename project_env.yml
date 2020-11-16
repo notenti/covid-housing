@@ -1,0 +1,8 @@
+name: dream-team
+channels:
+  - conda-forge
+  - defautls
+dependencies:
+  - python=3.7
+  - pandas
+  - numpy
