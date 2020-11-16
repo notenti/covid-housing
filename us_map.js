@@ -13,8 +13,33 @@ function choropleth(counties, states, mesh) {
     var handler;
     var colors_per_class = 0;
 
-    var x = d3.scaleQuantile();
-    var y = housing_percent => {
+    var x = (new_covid_cases, population) => {
+        // CDC low population
+        if (population < 300000) {
+            if (new_covid_cases > 10) {
+                return 2;
+            }
+            else if (new_covid_cases > 6) {
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }
+        // CDC high population
+        else {
+            if (new_covid_cases > 500) {
+                return 2;
+            }
+            else if (new_covid_cases > 250) {
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }
+    };
+    var y = (housing_percent) => {
         if (housing_percent > 0.06) {
             return 0;
         } else if (housing_percent > 0.02) {
@@ -28,8 +53,9 @@ function choropleth(counties, states, mesh) {
         if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
         let day_of_interest = value.get(epoch)[0];
         let percent_change_in_housing = day_of_interest.percent_change;
-        let confirmed_covid_cases = day_of_interest.normalized_covid;
-        return colors[y(percent_change_in_housing) + x(confirmed_covid_cases) * colors_per_class];
+        let seven_day_avg_new = day_of_interest.seven_day_avg_new;
+        let population = day_of_interest.population
+        return colors[y(percent_change_in_housing) + x(seven_day_avg_new, population) * colors_per_class];
     };
 
     var colorScheme = bivariateColors;
@@ -43,9 +69,9 @@ function choropleth(counties, states, mesh) {
 
     const covidColors = value => {
         if (!value || !value.get(epoch) || !value.get(epoch)[0].Zhvi) return '#ccc';
-        let day_of_interest = value.get(epoch)[0];
-        let confirmed_covid_cases = day_of_interest.normalized_covid;
-        return colors[x(confirmed_covid_cases) * colors_per_class];
+        let seven_day_avg_new = day_of_interest.seven_day_avg_new;
+        let population = day_of_interest.population;
+        return colors[x(seven_day_avg_new, population) * colors_per_class];
     };
 
     const generateToolTip = d => {
@@ -114,7 +140,6 @@ function choropleth(counties, states, mesh) {
             };
 
             updateCovid = function () {
-                x.domain(flattened_covid);
             };
 
             updateHousing = function () {
@@ -123,7 +148,6 @@ function choropleth(counties, states, mesh) {
 
             updateColors = function () {
                 colors_per_class = Math.floor(Math.sqrt(colors.length));
-                x.range(d3.range(colors_per_class));
             };
         });
     }
