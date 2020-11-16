@@ -48,7 +48,6 @@ if __name__ == "__main__":
     # Joined dataset
     joined_df = pd.merge(covid_df, housing_df, on=["year_month_day", "county_fips"], how="left")
     joined_df = joined_df[['date', 'county_fips', 'population', 'total_confirmed', 'new_confirmed', 'Zhvi']]
-    joined_df["Zhvi"] = joined_df.groupby("county_fips")["Zhvi"].apply(lambda g: g.interpolate(method="spline", order=3, limit_direction="both"))
 
     # Forecasted dataset
     if args.forecast is not None:
@@ -58,11 +57,16 @@ if __name__ == "__main__":
         forecast_df = forecast_df.rename(columns = {"zhvi": "Zhvi", "confirmed_cases": "total_confirmed"})
         forecast_df["county_fips"] = forecast_df["county_fips"].map(lambda x: "0" + x if len(x) == 4 else x)
         forecast_df["county_fips"] = forecast_df["county_fips"].map(lambda x: "00" + x if len(x) == 3 else x)
-        # forecast_df.loc[forecast_df.date.dt.strftime("%d") != "01", "Zhvi"] = np.nan
+        forecast_df.loc[forecast_df.date.dt.strftime("%d") != "30", "Zhvi"] = np.nan
+
+        bad_fips = joined_df.groupby("county_fips", dropna=False).count()["Zhvi"] == 0
+        bad_fips = bad_fips[bad_fips == True]
+        forecast_df.loc[forecast_df.county_fips.isin(bad_fips.index)] = np.nan
         joined_df = joined_df.append(forecast_df, ignore_index = True)
-        joined_df.sort_values(["county_fips", "date"], inplace=True)
+        joined_df.sort_values(["county_fips", "date"], inplace=True, ignore_index=True)
         joined_df["population"] = joined_df["population"].fillna(method="backfill")
 
+    joined_df["Zhvi"] = joined_df.groupby("county_fips")["Zhvi"].apply(lambda g: g.interpolate(method="spline", order=3, limit_direction="both"))
     joined_df["new_confirmed"] = joined_df.groupby("county_fips")["total_confirmed"].diff().shift(-1)
 
     # Output to csv
