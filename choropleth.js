@@ -1,11 +1,13 @@
 import { timeSeriesChart } from './time_series.js';
 import { choropleth } from './us_map.js';
 import { getStatistics, getCountyStatistics, getCrossCountryStatistics } from './statistics.js';
+import { Spinner } from './lib/spin.js';
 
 const dates_of_interest = d3.utcDays(new Date(2020, 1), new Date(2020, 12, 31));
 const full_date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 12, 31));
 const january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
 const february_1st_epoch = d3.utcDay(new Date(2020, 1)).getTime();
+d3.select('#holder').style('opacity', 0.0);
 
 var updateTrendLines;
 var choro;
@@ -23,6 +25,20 @@ const bivariate_colors = [
 ];
 
 const colors_per_class = Math.floor(Math.sqrt(bivariate_colors.length));
+
+var opts = {
+    lines: 9,
+    length: 9,
+    width: 5,
+    radius: 14,
+    color: '#3b4994',
+    speed: 1.9,
+    trail: 40,
+    className: 'spinner',
+};
+
+var target = document.getElementById('spinner');
+var spinner = new Spinner(opts).spin(target);
 
 // TODO: Move ledend creation into it's own module, perhaps put it in the choropleth one
 const createLegend = () => {
@@ -124,8 +140,6 @@ const g_time = d3
     .append('g')
     .attr('transform', 'translate(30,30)');
 
-g_time.call(slider_time);
-
 const parse_date = d3.timeParse('%Y-%m-%d');
 const promises = [d3.json('counties-albers-10m.json'), d3.csv('joined.csv')];
 
@@ -135,8 +149,6 @@ const atlanta = {
         name: 'Fulton',
     },
 };
-
-createLegend();
 
 const covid_chart = timeSeriesChart();
 d3.select('#covid').call(covid_chart);
@@ -158,6 +170,9 @@ function selectFilter() {
 
 Promise.all(promises).then(ready);
 function ready([us, covid]) {
+    spinner.stop();
+    g_time.call(slider_time);
+
     covid.forEach(d => {
         d.population = +d.population;
         d.total_confirmed = +d.total_confirmed;
@@ -212,7 +227,7 @@ function ready([us, covid]) {
         const house_date_data = getCountyStatistics(covid_by_county, id, 'Zhvi');
         const data = full_date_data.map((d, i) => [full_date_range[i], d, house_date_data[i]]);
 
-        let filtered = data.filter(d => d[0] >= february_1st_epoch)
+        let filtered = data.filter(d => d[0] >= february_1st_epoch);
 
         covid_chart.data(filtered, date);
         covid_chart.label(county, state);
@@ -227,7 +242,9 @@ function ready([us, covid]) {
         .epoch(january_1st_epoch)
         .handler(updateTrendLines);
 
+    createLegend();
     d3.select('#select').call(selectFilter());
+
     var filter = d3.select('#select input[name="data"]:checked').node().value;
 
     d3.selectAll("#select input[name='data']").on('change', function () {
@@ -236,4 +253,5 @@ function ready([us, covid]) {
     });
 
     updateTrendLines(february_1st_epoch, atlanta);
+    d3.select('#holder').transition().duration(1000).ease(d3.easeLinear).style('opacity', 1.0);
 }

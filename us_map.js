@@ -1,7 +1,7 @@
 function choropleth(counties, states, mesh) {
     const margin = { right: 50, top: 10, left: 50, bottom: 10 };
-    const width = 1200 - margin.right - margin.left;
-    const height = 700 - margin.top - margin.bottom;
+    const width = 980 - margin.right - margin.left;
+    const height = 620 - margin.top - margin.bottom;
     var updateEpoch;
     var updateCovid;
     var updateHousing;
@@ -98,6 +98,7 @@ function choropleth(counties, states, mesh) {
             d3.select(this).select('svg').remove();
             var dom = d3.select(this);
             var svg = dom
+                .attr('align', 'center')
                 .append('svg')
                 .attr('width', width + margin.right + margin.left)
                 .attr('height', height + margin.top + margin.bottom);
