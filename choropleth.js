@@ -1,6 +1,6 @@
-import { timeSeriesChart } from './time_series.js';
-import { choropleth } from './us_map.js';
-import { getStatistics, getCountyStatistics, getCrossCountryStatistics } from './statistics.js';
+import { timeSeriesChart } from './lib/time_series.js';
+import { choropleth } from './lib/us_map.js';
+import { getCountyStatistics, getCrossCountryStatistics } from './lib/statistics.js';
 import { Spinner } from './lib/spin.js';
 
 const dates_of_interest = d3.utcDays(new Date(2020, 1), new Date(2020, 11, 31));
