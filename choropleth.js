@@ -46,14 +46,31 @@ var spinner = new Spinner(opts).spin(target);
 const createLegend = () => {
     const legend = d3.select('#legend').append('svg').attr('width', 120).attr('height', 120);
     const side_length = 24;
+
+    var tip = d3
+        .tip()
+        .attr('class', 'd3-tip-legend')
+        .html(
+            (EVENT, d) => `<table><tbody>
+    <tr><td class='wide'><strong><span id='purple'>Risk</span></strong></td></tr>
+    <tr><td class='wide'>The Center for Disease Control's risk levels, broken up by high, moderate, and low risk.</td></tr>
+    <tr><td class='wide'><strong><span id='blue'>ZHVI</span></strong></td></tr>
+    <tr><td class='wide'>Annualized Zillow Home Value Index calculated by computing change in ZHVI at year start and extending that change over a 12 month horizon.</td></tr>
+    </tbody></table>`
+        );
+
     const group = legend
         .append('g')
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide)
         .attr(
             'transform',
             `translate(20, 20)rotate(-45 ${(side_length * colors_per_class) / 2},${
                 (side_length * colors_per_class) / 2
             })`
         );
+
+    legend.call(tip);
     const marker = group
         .append('marker')
         .attr('id', 'arrow')
@@ -131,14 +148,14 @@ const slider_time = d3
         updateTrendLines(epoch_time, null);
         choro.epoch(epoch_time);
     })
-    .on("end", val => {
+    .on('end', val => {
         let year = val.getFullYear();
         let month = (1 + val.getMonth()).toString().padStart(2, '0');
         let day = val.getDate().toString().padStart(2, '0');
-      
+
         let date = year + '-' + month + '-' + day;
         GAevent('slider', 'day', date); // GA Event
-    })
+    });
 
 const g_time = d3
     .select('#slider')
@@ -169,8 +186,8 @@ function selectFilter() {
             d3.select(this).html(
                 '<form>' +
                     "<input type='radio' name='data' value='both' checked> Both<br>" +
-                    "<input type='radio' name='data' value='housing'> Housing<br>" +
-                    "<input type='radio' name='data' value='covid'> COVID-19<br>" +
+                    "<input type='radio' name='data' value='housing'> Zillow Home Value Index<br>" +
+                    "<input type='radio' name='data' value='covid'> CDC COVID-19 Risk Level<br>" +
                     '</form>'
             );
         });
@@ -251,17 +268,17 @@ function ready([us, covid]) {
     choro
         .colors(bivariate_colors)
         .covid(flattened_covid)
-        .epoch(january_1st_epoch)
+        .epoch(february_1st_epoch)
         .handler(updateTrendLines);
 
     createLegend();
     d3.select('#select').call(selectFilter());
 
     var filter = d3.select('#select input[name="data"]:checked').node().value;
-    
+
     d3.selectAll("#select input[name='data']").on('change', function () {
         filter = d3.select('#select input[name="data"]:checked').node().value;
-        GAevent('filters','radio',filter); // GA Event
+        GAevent('filters', 'radio', filter); // GA Event
         choro.colorScheme(filter);
     });
 

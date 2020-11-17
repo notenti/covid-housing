@@ -6,8 +6,6 @@ body {
     background-color: white;
 }
 
-body {margin: 0; height: 100%; overflow-y: hidden}
-
 .jumbotron {
     margin-top: 10px;
     background-color: white;
@@ -43,4 +41,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .y-axis-right text {
     fill: #5698b9;
+}
+
+#purple {
+    color: #be64ac
+}
+
+#blue {
+    color: #5698b9
 }
