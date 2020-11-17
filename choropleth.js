@@ -10,6 +10,7 @@ const january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
 const february_1st_epoch = d3.utcDay(new Date(2020, 1)).getTime();
 d3.select('#holder').style('opacity', 0.0);
 
+var loadStartTime = +new Date(); // For GA load timing
 var updateTrendLines;
 var choro;
 
@@ -129,7 +130,15 @@ const slider_time = d3
         let epoch_time = val.getTime();
         updateTrendLines(epoch_time, null);
         choro.epoch(epoch_time);
-    });
+    })
+    .on("end", val => {
+        let year = val.getFullYear();
+        let month = (1 + val.getMonth()).toString().padStart(2, '0');
+        let day = val.getDate().toString().padStart(2, '0');
+      
+        let date = year + '-' + month + '-' + day;
+        GAevent('slider', 'day', date); // GA Event
+    })
 
 const g_time = d3
     .select('#slider')
@@ -174,6 +183,8 @@ function ready([us, covid]) {
     spinner.stop();
     g_time.call(slider_time);
 
+    const loadTime = Math.round(+new Date() - loadStartTime);
+    GAtiming('load', loadTime, 'csv file'); // GA load time
     covid.forEach(d => {
         d.population = +d.population;
         d.total_confirmed = +d.total_confirmed;
@@ -247,9 +258,10 @@ function ready([us, covid]) {
     d3.select('#select').call(selectFilter());
 
     var filter = d3.select('#select input[name="data"]:checked').node().value;
-
+    
     d3.selectAll("#select input[name='data']").on('change', function () {
         filter = d3.select('#select input[name="data"]:checked').node().value;
+        GAevent('filters','radio',filter); // GA Event
         choro.colorScheme(filter);
     });
 
