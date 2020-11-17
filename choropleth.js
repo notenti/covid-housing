@@ -147,6 +147,11 @@ const slider_time = d3
         let epoch_time = val.getTime();
         updateTrendLines(epoch_time, null);
         choro.epoch(epoch_time);
+        if (epoch_time >= forecast_start) {
+            choro.showText()
+        } else {
+            choro.removeText()
+        }
     })
     .on('end', val => {
         let year = val.getFullYear();
