@@ -7,6 +7,7 @@ function timeSeriesChart() {
     var updateFips;
     var data = [];
     var date;
+    var forecast_date;
     var label;
     var fips;
 
@@ -79,11 +80,13 @@ function timeSeriesChart() {
             genter.append('g').attr('class', 'x-axis');
             genter.append('g').attr('class', 'y-axis-left');
             genter.append('path').attr('class', 'cov-line');
+            genter.append('path').attr('class', 'forecast-cov-line');
             genter
                 .append('g')
                 .attr('transform', `translate(${width}, 0)`)
                 .attr('class', 'y-axis-right');
             genter.append('path').attr('class', 'housing-line');
+            genter.append('path').attr('class', 'forecast-housing-line');
 
             var g = svg.select('g');
 
@@ -95,11 +98,29 @@ function timeSeriesChart() {
                 .attr('stroke-width', 2)
                 .attr('d', covLine);
 
+            var forecastCovLines = g
+                .select('.forecast-cov-line')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', '#be64ac')
+                .style('stroke-dasharray', '3,3')
+                .attr('stroke-width', 2)
+                .attr('d', covLine);
+
             var housingLines = g
                 .select('.housing-line')
                 .datum(data)
                 .attr('fill', 'none')
                 .attr('stroke', '#5698b9')
+                .attr('stroke-width', 2)
+                .attr('d', housingLine);
+
+            var forecastHousingLines = g
+                .select('.forecast-housing-line')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', '#5698b9')
+                .style('stroke-dasharray', '3,3')
                 .attr('stroke-width', 2)
                 .attr('d', housingLine);
 
@@ -111,8 +132,15 @@ function timeSeriesChart() {
 
             updateData = function () {
                 const data_up_to_date = data.filter(([key, val]) => key <= date);
-                var covUpdate = g.select('.cov-line').datum(data_up_to_date);
-                var housingUpdate = g.select('.housing-line').datum(data_up_to_date);
+                const forecast_stop = data_up_to_date.filter(([key, val]) => key < forecast_date);
+                const forecast_start = data_up_to_date.filter(([key, val]) => key >= forecast_date);
+                var covUpdate = g.select('.cov-line').datum(forecast_stop);
+                var forecastCovUpdate = g.select('.forecast-cov-line').datum(forecast_start);
+                var housingUpdate = g.select('.housing-line').datum(forecast_stop);
+                var forecastHousingUpdate = g
+                    .select('.forecast-housing-line')
+                    .datum(forecast_start);
+
                 x.domain(d3.extent(data, d => d[0])).range([0, width]);
                 yLeft.domain(d3.extent(data, d => d[1])).range([height, 0]);
                 yRight.domain(d3.extent(data, d => d[2])).range([height, 0]);
@@ -121,6 +149,8 @@ function timeSeriesChart() {
                 svg.select('.y-axis-right').call(yAxisRight);
                 covUpdate.transition().duration(1000).attr('d', covLine);
                 housingUpdate.transition().duration(1000).attr('d', housingLine);
+                forecastCovUpdate.transition().duration(1000).attr('d', covLine);
+                forecastHousingUpdate.transition().duration(1000).attr('d', housingLine);
             };
 
             updateLabel = function () {
@@ -132,10 +162,11 @@ function timeSeriesChart() {
         });
     }
 
-    chart.data = function (value, stop_date) {
+    chart.data = function (value, stop_date, forecast_start) {
         if (!arguments.length) return data;
         data = value;
         date = stop_date;
+        forecast_date = forecast_start;
         if (typeof updateData === 'function') updateData();
         return chart;
     };

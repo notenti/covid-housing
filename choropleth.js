@@ -3,8 +3,9 @@ import { choropleth } from './us_map.js';
 import { getStatistics, getCountyStatistics, getCrossCountryStatistics } from './statistics.js';
 import { Spinner } from './lib/spin.js';
 
-const dates_of_interest = d3.utcDays(new Date(2020, 1), new Date(2020, 12, 31));
-const full_date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 12, 31));
+const dates_of_interest = d3.utcDays(new Date(2020, 1), new Date(2020, 11, 31));
+const full_date_range = d3.utcDays(new Date(2020, 0), new Date(2020, 11, 31));
+const forecast_start = d3.utcDay(new Date(2020, 9, 26)).getTime();
 const january_1st_epoch = d3.utcDay(new Date(2020, 0)).getTime();
 const february_1st_epoch = d3.utcDay(new Date(2020, 1)).getTime();
 d3.select('#holder').style('opacity', 0.0);
@@ -229,7 +230,7 @@ function ready([us, covid]) {
 
         let filtered = data.filter(d => d[0] >= february_1st_epoch);
 
-        covid_chart.data(filtered, date);
+        covid_chart.data(filtered, date, forecast_start);
         covid_chart.label(county, state);
         covid_chart.fips(id);
     };
