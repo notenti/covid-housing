@@ -29,7 +29,6 @@ This repository provides the script [clean_data](/clean_data.py) to create the j
 ```bash
 ./clean_data.py --housing <path_to_housing> --covid <path_to_covid> --output <output_file_name>
 ```
-The dependencies needed to run this script are provided in form a [conda environment](/covid_housing_env.yml)
 
 The cleaned dataset has the schema
 ```
